@@ -1,0 +1,122 @@
+.toast-container {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .toast-container {
+        left: var(--space-4);
+        right: var(--space-4);
+        bottom: var(--space-4);
+    }
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    min-width: 320px;
+    max-width: 420px;
+    animation: slideInRight var(--transition-normal) ease-out;
+    pointer-events: auto;
+}
+
+@media (max-width: 640px) {
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+.toast.success {
+    border-left: 4px solid var(--success-500);
+}
+
+.toast.success .toast-icon {
+    color: var(--success-500);
+}
+
+.toast.error {
+    border-left: 4px solid var(--error-500);
+}
+
+.toast.error .toast-icon {
+    color: var(--error-500);
+}
+
+.toast.warning {
+    border-left: 4px solid var(--warning-500);
+}
+
+.toast.warning .toast-icon {
+    color: var(--warning-500);
+}
+
+.toast.info {
+    border-left: 4px solid var(--info-500);
+}
+
+.toast.info .toast-icon {
+    color: var(--info-500);
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.toast-message {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-top: var(--space-1);
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.toast-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

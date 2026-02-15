@@ -1,0 +1,206 @@
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { testerStats, testerActiveTasks, availableTasks } from '../../data/mockData';
+import { formatCurrency, formatCredits, formatDate, getDeadlineStatus } from '../../utils/helpers';
+import Button from '../../components/common/Button';
+import Badge, { AIBadge } from '../../components/common/Badge';
+import Chart from '../../components/common/Chart';
+import { FiDollarSign, FiClipboard, FiStar, FiCreditCard, FiArrowUpRight, FiCalendar, FiTrendingUp, FiExternalLink } from 'react-icons/fi';
+import './TesterDashboard.css';
+
+function TesterDashboard() {
+    const { user } = useAuth();
+
+    const stats = [
+        {
+            label: 'Available Credits',
+            value: formatCredits(testerStats.availableCredits),
+            icon: FiCreditCard,
+            iconClass: 'primary',
+            subtext: `≈ ${formatCurrency(testerStats.availableCredits * 0.1)}`,
+        },
+        {
+            label: 'Total Earnings',
+            value: formatCurrency(testerStats.totalEarnings),
+            icon: FiDollarSign,
+            iconClass: 'success',
+            change: '+12%',
+            positive: true,
+        },
+        {
+            label: 'Completed Tasks',
+            value: testerStats.completedTasks,
+            icon: FiClipboard,
+            iconClass: 'secondary',
+        },
+        {
+            label: 'Rating',
+            value: testerStats.rating.toFixed(1),
+            icon: FiStar,
+            iconClass: 'warning',
+            subtext: `${testerStats.reviewCount} reviews`,
+        },
+    ];
+
+    const earningsData = {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [
+            {
+                label: 'Credits Earned',
+                data: [450, 680, 520, 890],
+            },
+        ],
+    };
+
+    return (
+        <div className="tester-dashboard">
+            {/* Page Header */}
+            <div className="page-header">
+                <div>
+                    <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]}!</h1>
+                    <p className="page-subtitle">Your testing performance this month</p>
+                </div>
+                <div className="page-actions">
+                    <Link to="/tester/marketplace">
+                        <Button variant="primary" icon={<FiExternalLink />}>
+                            Browse Tasks
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="stats-grid">
+                {stats.map((stat, index) => (
+                    <div key={index} className="card stats-card">
+                        <div className={`stats-icon ${stat.iconClass}`}>
+                            <stat.icon size={24} />
+                        </div>
+                        <div className="stats-value">{stat.value}</div>
+                        <div className="stats-label">{stat.label}</div>
+                        {stat.subtext && (
+                            <div className="stats-subtext">{stat.subtext}</div>
+                        )}
+                        {stat.change && (
+                            <div className={`stats-change ${stat.positive ? 'positive' : 'negative'}`}>
+                                <FiTrendingUp size={12} />
+                                <span>{stat.change} this month</span>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Main Content */}
+            <div className="content-grid">
+                {/* Active Tasks */}
+                <div className="col-8">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Your Active Tasks</h3>
+                            <Link to="/tester/my-tasks" className="card-link">
+                                View all <FiArrowUpRight size={14} />
+                            </Link>
+                        </div>
+
+                        {testerActiveTasks.length > 0 ? (
+                            <div className="active-tasks-list">
+                                {testerActiveTasks.map(task => {
+                                    const deadline = getDeadlineStatus(task.deadline);
+                                    return (
+                                        <div key={task.id} className="active-task-item">
+                                            <div className="task-main">
+                                                <h4 className="task-app-name">{task.appName}</h4>
+                                                <p className="task-test-types">{task.testTypes.join(', ')}</p>
+                                            </div>
+                                            <div className="task-deadline">
+                                                <FiCalendar size={14} />
+                                                <span>{formatDate(task.deadline)}</span>
+                                                <Badge variant={deadline.color} size="sm">{deadline.label}</Badge>
+                                            </div>
+                                            <div className="task-credits">
+                                                <span className="credits-value">{formatCredits(task.credits)}</span>
+                                                <span className="credits-label">Credits</span>
+                                            </div>
+                                            <div className="task-action">
+                                                <Link to={`/tester/submit/${task.id}`}>
+                                                    <Button variant="primary" size="sm">
+                                                        Submit Work
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>No active tasks. Browse the marketplace to find new work.</p>
+                                <Link to="/tester/marketplace">
+                                    <Button variant="secondary">Browse Tasks</Button>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Earnings Chart */}
+                <div className="col-4">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Weekly Earnings</h3>
+                        </div>
+                        <Chart
+                            type="bar"
+                            data={earningsData}
+                            height={220}
+                        />
+                    </div>
+                </div>
+
+                {/* Available Tasks Preview */}
+                <div className="col-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Available in Marketplace</h3>
+                            <Link to="/tester/marketplace" className="card-link">
+                                View all <FiArrowUpRight size={14} />
+                            </Link>
+                        </div>
+                        <div className="available-tasks-grid">
+                            {availableTasks.slice(0, 3).map(task => (
+                                <div key={task.id} className="available-task-card">
+                                    <div className="task-header">
+                                        <Badge variant="primary">{task.level}</Badge>
+                                        <span className="task-posted">Posted {formatDate(task.postedAt)}</span>
+                                    </div>
+                                    <h4 className="task-title">{task.appName}</h4>
+                                    <p className="task-company">{task.companyName}</p>
+                                    <div className="task-tags">
+                                        {task.testTypes.slice(0, 2).map(type => (
+                                            <span key={type} className="task-tag">{type}</span>
+                                        ))}
+                                        {task.testTypes.length > 2 && (
+                                            <span className="task-tag">+{task.testTypes.length - 2}</span>
+                                        )}
+                                    </div>
+                                    <div className="task-footer">
+                                        <div className="task-reward">
+                                            <span className="reward-value">{formatCredits(task.credits)}</span>
+                                            <span className="reward-label">Credits</span>
+                                        </div>
+                                        <Link to={`/tester/task/${task.id}`}>
+                                            <Button variant="ghost" size="sm">View Details</Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default TesterDashboard;

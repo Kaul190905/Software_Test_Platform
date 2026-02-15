@@ -1,0 +1,57 @@
+.admin-tasks-page {
+    padding: 2rem;
+}
+
+.admin-tasks-card {
+    margin-top: 2rem;
+    padding: 0;
+    overflow: hidden;
+}
+
+.admin-tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-tasks-table th {
+    padding: 1.25rem 1.5rem;
+    background: var(--bg-offset);
+    text-align: left;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+}
+
+.admin-tasks-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.task-detail-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-name {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.task-type {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.dev-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.dev-name {
+    font-weight: 600;
+}
+
+.dev-company {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
