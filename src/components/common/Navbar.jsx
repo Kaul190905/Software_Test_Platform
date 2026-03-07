@@ -3,7 +3,6 @@ import { useAuth } from '../../context/AuthContext';
 import {
     FiMenu,
     FiX,
-    FiBell,
     FiUser,
     FiLogOut,
     FiSettings,
@@ -11,6 +10,7 @@ import {
 } from 'react-icons/fi';
 import { useState, useRef, useEffect } from 'react';
 import { getInitials } from '../../utils/helpers';
+import Notification from './Notification';
 import './Navbar.css';
 
 function Navbar({ onMenuToggle, isSidebarOpen }) {
@@ -18,27 +18,13 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const profileRef = useRef(null);
-    const notificationsRef = useRef(null);
-
-    // Mock notifications
-    const notifications = [
-        { id: 1, title: 'Task Completed', message: 'Banking Dashboard testing completed', time: '5m ago', unread: true },
-        { id: 2, title: 'New Feedback', message: 'You have new feedback from Sarah', time: '1h ago', unread: true },
-        { id: 3, title: 'Payment Received', message: 'Payment of ₹500 processed', time: '3h ago', unread: false },
-    ];
-
-    const unreadCount = notifications.filter(n => n.unread).length;
 
     // Close dropdowns when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (profileRef.current && !profileRef.current.contains(event.target)) {
                 setIsProfileOpen(false);
-            }
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-                setIsNotificationsOpen(false);
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
@@ -92,45 +78,7 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
 
             <div className="navbar-right">
                 {/* Notifications */}
-                <div className="navbar-dropdown" ref={notificationsRef}>
-                    <button
-                        className="navbar-icon-btn"
-                        onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                        aria-label="Notifications"
-                    >
-                        <FiBell size={20} />
-                        {unreadCount > 0 && (
-                            <span className="notification-badge">{unreadCount}</span>
-                        )}
-                    </button>
-
-                    {isNotificationsOpen && (
-                        <div className="dropdown-menu notifications-menu">
-                            <div className="dropdown-header">
-                                <span className="dropdown-title">Notifications</span>
-                                <button className="dropdown-action">Mark all read</button>
-                            </div>
-                            <div className="dropdown-content">
-                                {notifications.map(notification => (
-                                    <div
-                                        key={notification.id}
-                                        className={`notification-item ${notification.unread ? 'unread' : ''}`}
-                                    >
-                                        <div className="notification-dot" />
-                                        <div className="notification-info">
-                                            <p className="notification-title">{notification.title}</p>
-                                            <p className="notification-message">{notification.message}</p>
-                                            <span className="notification-time">{notification.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="dropdown-footer">
-                                <Link to="/notifications">View all notifications</Link>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                <Notification />
 
                 {/* Profile Dropdown */}
                 <div className="navbar-dropdown" ref={profileRef}>
@@ -153,7 +101,7 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                     </button>
 
                     {isProfileOpen && (
-                        <div className="dropdown-menu profile-menu">
+                        <div className="dropdown-menu profile-menu open">
                             <div className="dropdown-user-info">
                                 <div className="avatar lg">
                                     {user?.avatar ? (

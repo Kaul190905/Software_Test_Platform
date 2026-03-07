@@ -34,6 +34,9 @@ import AdminTasks from './pages/admin/AdminTasks';
 import Verification from './pages/admin/Verification';
 import Analytics from './pages/admin/Analytics';
 
+// Profile Component
+import Profile from './components/Profile';
+
 function App() {
     return (
         <AuthProvider>
@@ -78,6 +81,11 @@ function App() {
                         <Route path="credits" element={<AdminDashboard />} />
                         <Route path="analytics" element={<Analytics />} />
                         <Route index element={<Navigate to="dashboard" replace />} />
+                    </Route>
+
+                    {/* Profile Route - accessible to all authenticated users */}
+                    <Route path="/profile" element={<DashboardLayout />}>
+                        <Route index element={<Profile />} />
                     </Route>
 
                     {/* Default Redirect */}
