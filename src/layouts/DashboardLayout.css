@@ -5,24 +5,34 @@
 
 .dashboard-main {
     flex: 1;
-    margin-left: var(--sidebar-width);
+    margin-left: 0;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
     transition: margin-left var(--transition-normal);
-}
-
-@media (max-width: 1024px) {
-    .dashboard-main {
-        margin-left: 0;
-    }
 }
 
 .dashboard-content {
     flex: 1;
     padding: var(--space-6);
-    padding-top: calc(var(--navbar-height) + var(--space-6));
+    /* Push content below floating nav, plus padding */
+    margin-top: calc(var(--navbar-height) + var(--space-8)); 
+    /* Enable internal scrolling */
+    overflow-y: auto;
     overflow-x: hidden;
+    height: calc(100vh - var(--navbar-height) - var(--space-8));
+    
+    /* Scrollbar for dashboard content */
+    scrollbar-width: thin;
+    scrollbar-color: var(--slate-600) transparent;
+}
+
+.dashboard-content::-webkit-scrollbar {
+    width: 6px;
+}
+.dashboard-content::-webkit-scrollbar-thumb {
+    background: var(--slate-600);
+    border-radius: var(--radius-full);
 }
 
 @media (max-width: 640px) {

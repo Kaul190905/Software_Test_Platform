@@ -48,10 +48,10 @@ function Payment() {
         e.preventDefault();
         setIsProcessing(true);
 
-        // Simulate payment processing
+        // Simulate payment processing and task creation
         await new Promise(resolve => setTimeout(resolve, 2500));
 
-        toast.success('Payment Successful!', `Your payment of ${formatCurrency(amount)} has been processed.`);
+        toast.success('Payment Successful & Task Created!', `Your task "${task.appName || 'New Task'}" is now live and ${formatCurrency(amount)} has been sent to admin.`);
         navigate('/developer/dashboard');
     };
 

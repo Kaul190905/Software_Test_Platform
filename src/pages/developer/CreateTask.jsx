@@ -92,11 +92,11 @@ function CreateTask() {
         if (!validateStep(3)) return;
 
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Simulate delay before redirecting to payment
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsLoading(false);
 
-        toast.success('Task Created!', 'Your testing task has been posted.');
-        navigate('/developer/payment', {
+        navigate('/developer/payments', {
             state: {
                 task: formData,
                 amount: formData.budget * 1.1 // Include platform fee

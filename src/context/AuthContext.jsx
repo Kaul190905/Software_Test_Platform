@@ -41,17 +41,8 @@ export function AuthProvider({ children }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        // Check for existing session
-        const storedUser = localStorage.getItem('testflow_user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                setIsAuthenticated(true);
-            } catch (e) {
-                localStorage.removeItem('testflow_user');
-            }
-        }
+        // No session persistence per user request. 
+        // Always land on the login page when the website is opened.
         setIsLoading(false);
     }, []);
 
@@ -71,7 +62,6 @@ export function AuthProvider({ children }) {
         const userWithEmail = { ...userData, email };
         setUser(userWithEmail);
         setIsAuthenticated(true);
-        localStorage.setItem('testflow_user', JSON.stringify(userWithEmail));
         setIsLoading(false);
 
         return userWithEmail;
@@ -118,13 +108,11 @@ export function AuthProvider({ children }) {
     const logout = () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('testflow_user');
     };
 
     const updateUser = (updates) => {
         const updatedUser = { ...user, ...updates };
         setUser(updatedUser);
-        localStorage.setItem('testflow_user', JSON.stringify(updatedUser));
     };
 
     const value = {

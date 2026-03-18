@@ -36,7 +36,6 @@ function Sidebar({ isOpen, onClose }) {
         { path: '/developer/create-task', icon: FiPlus, label: 'Create Task' },
         { path: '/developer/tasks', icon: FiClipboard, label: 'My Tasks' },
         { path: '/developer/feedback', icon: FiMessageSquare, label: 'Feedback' },
-        { path: '/developer/payments', icon: FiCreditCard, label: 'Payments' },
         { path: '/developer/reports', icon: FiFileText, label: 'Reports' },
     ];
 
@@ -44,7 +43,6 @@ function Sidebar({ isOpen, onClose }) {
         { path: '/tester/dashboard', icon: FiHome, label: 'Dashboard' },
         { path: '/tester/marketplace', icon: FiShoppingCart, label: 'Marketplace' },
         { path: '/tester/my-tasks', icon: FiClipboard, label: 'My Tasks' },
-        { path: '/tester/submit-proof', icon: FiUpload, label: 'Submit Proof' },
         { path: '/tester/status', icon: FiCheckCircle, label: 'Task Status' },
         { path: '/tester/wallet', icon: FiDollarSign, label: 'Wallet' },
     ];
@@ -54,7 +52,6 @@ function Sidebar({ isOpen, onClose }) {
         { path: '/admin/users', icon: FiUsers, label: 'Users' },
         { path: '/admin/tasks', icon: FiActivity, label: 'Tasks' },
         { path: '/admin/verification', icon: FiShield, label: 'Verification' },
-        { path: '/admin/credits', icon: FiTrendingUp, label: 'Credits' },
         { path: '/admin/analytics', icon: FiPieChart, label: 'Analytics' },
     ];
 
@@ -99,7 +96,7 @@ function Sidebar({ isOpen, onClose }) {
                                     <NavLink
                                         to={link.path}
                                         className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                                        onClick={() => window.innerWidth < 1024 && onClose()}
+                                        onClick={onClose}
                                     >
                                         <link.icon size={20} className="nav-icon" />
                                         <span className="nav-label">{link.label}</span>
@@ -112,26 +109,7 @@ function Sidebar({ isOpen, onClose }) {
                         </ul>
                     </div>
 
-                    {/* AI Features Section */}
-                    <div className="nav-section">
-                        <span className="nav-section-title">AI Features</span>
-                        <div className="ai-status-card">
-                            <div className="ai-status-header">
-                                <span className="ai-status-dot active" />
-                                <span className="ai-status-text">AI System Active</span>
-                            </div>
-                            <div className="ai-status-stats">
-                                <div className="ai-stat">
-                                    <span className="ai-stat-value">98.5%</span>
-                                    <span className="ai-stat-label">Accuracy</span>
-                                </div>
-                                <div className="ai-stat">
-                                    <span className="ai-stat-value">2.3s</span>
-                                    <span className="ai-stat-label">Avg. Time</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </nav>
 
                 <div className="sidebar-footer">
