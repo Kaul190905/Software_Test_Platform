@@ -1,123 +1,92 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
-
-// Mock user data for different roles
-const mockUsers = {
-    developer: {
-        id: 'dev-001',
-        name: 'John Developer',
-        email: 'john@devcompany.com',
-        role: 'developer',
-        avatar: null,
-        company: 'TechCorp Inc.',
-        joinedDate: '2024-01-15',
-    },
-    tester: {
-        id: 'test-001',
-        name: 'Sarah Tester',
-        email: 'sarah@testing.com',
-        role: 'tester',
-        avatar: null,
-        rating: 4.8,
-        completedTests: 156,
-        walletBalance: 2450,
-        joinedDate: '2023-11-20',
-    },
-    admin: {
-        id: 'admin-001',
-        name: 'Admin User',
-        email: 'admin@testflow.com',
-        role: 'admin',
-        avatar: null,
-        permissions: ['all'],
-        joinedDate: '2023-01-01',
-    },
-};
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+    // On mount, check for existing session via stored token
     useEffect(() => {
-        // Check for existing session
+        const token = localStorage.getItem('testflow_token');
         const storedUser = localStorage.getItem('testflow_user');
-        if (storedUser) {
+
+        if (token && storedUser) {
             try {
                 const parsedUser = JSON.parse(storedUser);
                 setUser(parsedUser);
                 setIsAuthenticated(true);
             } catch (e) {
+                localStorage.removeItem('testflow_token');
                 localStorage.removeItem('testflow_user');
             }
         }
         setIsLoading(false);
     }, []);
 
-    const login = async (email, password, role = 'developer') => {
+    const login = async (email, password) => {
         setIsLoading(true);
+        try {
+            const data = await authAPI.login(email, password);
+            const { user: userData, token } = data;
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Mock authentication - in real app, this would call an API
-        const userData = mockUsers[role];
-        if (!userData) {
+            localStorage.setItem('testflow_token', token);
+            localStorage.setItem('testflow_user', JSON.stringify(userData));
+            setUser(userData);
+            setIsAuthenticated(true);
             setIsLoading(false);
-            throw new Error('Invalid role');
+
+            return userData;
+        } catch (err) {
+            setIsLoading(false);
+            throw err;
         }
-
-        const userWithEmail = { ...userData, email };
-        setUser(userWithEmail);
-        setIsAuthenticated(true);
-        localStorage.setItem('testflow_user', JSON.stringify(userWithEmail));
-        setIsLoading(false);
-
-        return userWithEmail;
     };
 
     const signup = async (userData) => {
         setIsLoading(true);
+        try {
+            const data = await authAPI.register(userData);
+            const { user: newUser, token } = data;
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+            // Store token so OTP verify call works
+            localStorage.setItem('testflow_token', token);
+            localStorage.setItem('testflow_user', JSON.stringify(newUser));
+            setUser(newUser);
+            setIsLoading(false);
 
-        // Mock signup - returns user data for OTP verification
-        const newUser = {
-            id: `${userData.role}-${Date.now()}`,
-            name: userData.name,
-            email: userData.email,
-            role: userData.role,
-            avatar: null,
-            joinedDate: new Date().toISOString().split('T')[0],
-            ...(userData.role === 'tester' && { walletBalance: 0, completedTests: 0, rating: 0 }),
-            ...(userData.role === 'developer' && { company: userData.company || '' }),
-        };
-
-        setIsLoading(false);
-        return newUser;
+            return newUser;
+        } catch (err) {
+            setIsLoading(false);
+            throw err;
+        }
     };
 
     const verifyOTP = async (otp) => {
         setIsLoading(true);
+        try {
+            const data = await authAPI.verifyOTP(otp);
+            const verifiedUser = data.user;
 
-        // Simulate OTP verification
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Mock OTP verification - any 6-digit code works
-        if (otp.length !== 6) {
+            // Update stored user with verified status
+            localStorage.setItem('testflow_user', JSON.stringify(verifiedUser));
+            setUser(verifiedUser);
+            setIsAuthenticated(true);
             setIsLoading(false);
-            throw new Error('Invalid OTP');
-        }
 
-        setIsLoading(false);
-        return true;
+            return true;
+        } catch (err) {
+            setIsLoading(false);
+            throw err;
+        }
     };
 
     const logout = () => {
         setUser(null);
         setIsAuthenticated(false);
+        localStorage.removeItem('testflow_token');
         localStorage.removeItem('testflow_user');
     };
 

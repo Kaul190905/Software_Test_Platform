@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { testerActiveTasks } from '../../data/mockData';
+import { tasksAPI, feedbackAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 import FileUpload from '../../components/common/FileUpload';
 import { useToast } from '../../components/common/Toast';
@@ -20,12 +20,19 @@ function SubmitFeedback() {
         proofFiles: [],
     });
     const [errors, setErrors] = useState({});
+    const [task, setTask] = useState({ appName: 'Loading...', testTypes: [], credits: 0 });
 
-    const task = testerActiveTasks.find(t => t.id === parseInt(taskId)) || {
-        appName: 'Sample App',
-        testTypes: ['UI Testing', 'Functional'],
-        credits: 500,
-    };
+    useEffect(() => {
+        async function fetchTask() {
+            try {
+                const res = await tasksAPI.get(taskId);
+                setTask(res.task || res);
+            } catch (err) {
+                console.error('Failed to load task:', err);
+            }
+        }
+        if (taskId) fetchTask();
+    }, [taskId]);
 
     const testResults = [
         { id: 'pass', label: 'All Tests Passed', icon: FiCheckCircle, color: 'success' },
@@ -74,12 +81,21 @@ function SubmitFeedback() {
         if (!validate()) return;
 
         setIsSubmitting(true);
-
-        // Simulate submission
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        toast.success('Feedback Submitted!', 'Your submission is now pending AI verification.');
-        navigate('/tester/dashboard');
+        try {
+            await feedbackAPI.submit({
+                task: taskId,
+                testResult: formData.testResult,
+                observations: formData.observations,
+                proofType: formData.proofType,
+                proofUrl: 'uploaded-proof',
+            });
+            toast.success('Feedback Submitted!', 'Your submission is now pending AI verification.');
+            navigate('/tester/dashboard');
+        } catch (err) {
+            toast.error('Error', err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { adminStats, adminUsers, adminCreditLogs } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { tasksAPI, usersAPI, transactionsAPI } from '../../services/api';
 import { formatCurrency, formatCredits, formatDate } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
@@ -9,33 +9,59 @@ import './AdminDashboard.css';
 
 function AdminDashboard() {
     const [timeRange, setTimeRange] = useState('7d');
+    const [dashStats, setDashStats] = useState(null);
+    const [users, setUsers] = useState([]);
+    const [creditLogs, setCreditLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [statsRes, usersRes, txRes] = await Promise.all([
+                    tasksAPI.getStats(),
+                    usersAPI.list(),
+                    transactionsAPI.list(),
+                ]);
+                setDashStats(statsRes);
+                setUsers(usersRes.users || []);
+                setCreditLogs(txRes.transactions || []);
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
+
+    if (loading || !dashStats) return <div className="loading">Loading...</div>;
 
     const stats = [
         {
             label: 'Total Users',
-            value: adminStats.totalUsers,
+            value: dashStats.totalUsers || 0,
             icon: FiUsers,
             iconClass: 'primary',
-            change: adminStats.usersChange,
+            change: dashStats.usersChange || 0,
             positive: true,
         },
         {
             label: 'Platform Revenue',
-            value: formatCurrency(adminStats.platformRevenue),
+            value: formatCurrency(dashStats.platformRevenue || 0),
             icon: FiDollarSign,
             iconClass: 'success',
-            change: adminStats.revenueChange,
+            change: dashStats.revenueChange || 0,
             positive: true,
         },
         {
             label: 'Active Tasks',
-            value: adminStats.activeTasks,
+            value: dashStats.activeTasks || 0,
             icon: FiActivity,
             iconClass: 'secondary',
         },
         {
             label: 'Disputes Pending',
-            value: adminStats.disputesPending,
+            value: dashStats.disputesPending || 0,
             icon: FiAlertTriangle,
             iconClass: 'warning',
         },
@@ -177,8 +203,8 @@ function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {adminUsers.slice(0, 5).map(user => (
-                                        <tr key={user.id}>
+                                    {users.slice(0, 5).map(user => (
+                                        <tr key={user._id || user.id}>
                                             <td>
                                                 <div className="user-cell">
                                                     <div className="avatar sm">{user.name.split(' ').map(n => n[0]).join('')}</div>
@@ -194,7 +220,7 @@ function AdminDashboard() {
                                                 </Badge>
                                             </td>
                                             <td>{getStatusBadge(user.status)}</td>
-                                            <td className="date-cell">{formatDate(user.joinedAt)}</td>
+                                            <td className="date-cell">{formatDate(user.joinedAt || user.createdAt)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -213,8 +239,8 @@ function AdminDashboard() {
                             </Link>
                         </div>
                         <div className="credit-activity">
-                            {adminCreditLogs.slice(0, 5).map(log => (
-                                <div key={log.id} className="credit-log-item">
+                            {creditLogs.slice(0, 5).map(log => (
+                                <div key={log._id || log.id} className="credit-log-item">
                                     <div className="log-info">
                                         <p className="log-description">{log.description}</p>
                                         <p className="log-user">{log.userName} • {formatDate(log.timestamp)}</p>

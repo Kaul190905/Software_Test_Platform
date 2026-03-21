@@ -1,18 +1,28 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { developerFeedback } from '../../data/mockData';
+import { feedbackAPI } from '../../services/api';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import { FiClock, FiCheckCircle, FiXCircle, FiInfo } from 'react-icons/fi';
 import './Status.css';
 
 function Status() {
     const { user } = useAuth();
+    const [submissions, setSubmissions] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // In a real app, we would filter by the current tester's submissions
-    // Using developerFeedback as a proxy for submissions
-    const submissions = developerFeedback.map(fb => ({
-        ...fb,
-        testerId: 'test-001' // Mocking that these are the current user's
-    }));
+    useEffect(() => {
+        async function fetchSubmissions() {
+            try {
+                const res = await feedbackAPI.list();
+                setSubmissions(res.feedback || []);
+            } catch (err) {
+                console.error('Failed to load submissions:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchSubmissions();
+    }, []);
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -35,7 +45,7 @@ function Status() {
 
             <div className="status-list">
                 {submissions.map(sub => (
-                    <div key={sub.id} className="card status-card">
+                    <div key={sub._id || sub.id} className="card status-card">
                         <div className="status-card-main">
                             <div className="status-header">
                                 {getStatusIcon(sub.status)}

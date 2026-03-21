@@ -1,12 +1,34 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { testerStats, creditLogs } from '../../data/mockData';
+import { transactionsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
+import Loader from '../../components/common/Loader';
 import { FiDollarSign, FiTrendingUp, FiArrowUpRight, FiArrowDownLeft } from 'react-icons/fi';
 import './Wallet.css';
 
 function Wallet() {
     const { user } = useAuth();
+    const [walletData, setWalletData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchWallet() {
+            try {
+                const res = await transactionsAPI.wallet();
+                setWalletData(res);
+            } catch (err) {
+                console.error('Failed to load wallet:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchWallet();
+    }, []);
+
+    if (loading || !walletData) return <Loader />;
+
+    const { walletBalance = 0, pendingCredits = 0, totalEarnings = 0, recentTransactions = [] } = walletData;
 
     return (
         <div className="wallet-page">
@@ -27,8 +49,8 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Available Balance</span>
-                        <h2 className="stat-value">{testerStats.availableCredits} Credits</h2>
-                        <span className="stat-subtext">≈ ₹{testerStats.availableCredits * 10}</span>
+                        <h2 className="stat-value">{walletBalance} Credits</h2>
+                        <span className="stat-subtext">≈ ₹{walletBalance * 10}</span>
                     </div>
                 </div>
 
@@ -38,7 +60,7 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Total Earnings</span>
-                        <h2 className="stat-value">{testerStats.totalEarnings} Credits</h2>
+                        <h2 className="stat-value">{totalEarnings} Credits</h2>
                         <span className="stat-subtext">+12% from last month</span>
                     </div>
                 </div>
@@ -49,7 +71,7 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Pending Credits</span>
-                        <h2 className="stat-value">{testerStats.pendingCredits} Credits</h2>
+                        <h2 className="stat-value">{pendingCredits} Credits</h2>
                         <span className="stat-subtext">Under verification</span>
                     </div>
                 </div>
@@ -60,15 +82,15 @@ function Wallet() {
                     <h3 className="card-title">Transaction History</h3>
                 </div>
                 <div className="transaction-list">
-                    {creditLogs.filter(log => log.userType === 'tester' || log.user === user?.name).map(log => (
-                        <div key={log.id} className="transaction-item">
+                    {recentTransactions.map(log => (
+                        <div key={log._id || log.id} className="transaction-item">
                             <div className="transaction-info">
                                 <div className={`type-icon ${log.type}`}>
                                     {log.type === 'credit' ? <FiArrowDownLeft /> : <FiArrowUpRight />}
                                 </div>
                                 <div>
                                     <p className="transaction-desc">{log.description || log.taskName || 'Withdrawal'}</p>
-                                    <p className="transaction-date">{log.timestamp}</p>
+                                    <p className="transaction-date">{formatDate(log.timestamp || log.createdAt)}</p>
                                 </div>
                             </div>
                             <div className={`transaction-amount ${log.type}`}>

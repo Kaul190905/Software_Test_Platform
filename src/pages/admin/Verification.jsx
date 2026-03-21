@@ -1,13 +1,27 @@
-import { useState } from 'react';
-import { developerFeedback } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { feedbackAPI } from '../../services/api';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { FiCheckCircle, FiXCircle, FiInfo, FiEye } from 'react-icons/fi';
 import './Verification.css';
 
 function Verification() {
-    // In a real app, this would be a filtered list of pending or flagged submissions
-    const pendingVerifications = developerFeedback.filter(fb => fb.status === 'pending');
+    const [pendingVerifications, setPendingVerifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchPending() {
+            try {
+                const res = await feedbackAPI.list({ status: 'pending' });
+                setPendingVerifications(res.feedback || []);
+            } catch (err) {
+                console.error('Failed to load verifications:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPending();
+    }, []);
 
     return (
         <div className="verification-page">
@@ -20,7 +34,7 @@ function Verification() {
 
             <div className="verification-list">
                 {pendingVerifications.map(item => (
-                    <div key={item.id} className="card verification-card">
+                    <div key={item._id || item.id} className="card verification-card">
                         <div className="verification-card-header">
                             <div className="tester-profile">
                                 <div className="avatar sm">{item.testerName.split(' ').map(n => n[0]).join('')}</div>

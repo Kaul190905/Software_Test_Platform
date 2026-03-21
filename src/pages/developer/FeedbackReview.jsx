@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { developerFeedback } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { feedbackAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
@@ -10,11 +10,26 @@ import './FeedbackReview.css';
 
 function FeedbackReview() {
     const toast = useToast();
-    const [feedbacks, setFeedbacks] = useState(developerFeedback);
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedFeedback, setSelectedFeedback] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [filter, setFilter] = useState('all');
     const [clarificationNote, setClarificationNote] = useState('');
+
+    useEffect(() => {
+        async function fetchFeedback() {
+            try {
+                const res = await feedbackAPI.list();
+                setFeedbacks(res.feedback || []);
+            } catch (err) {
+                console.error('Failed to load feedback:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchFeedback();
+    }, []);
 
     const filteredFeedbacks = filter === 'all'
         ? feedbacks
@@ -30,25 +45,35 @@ function FeedbackReview() {
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
 
-    const handleApprove = (id) => {
-        setFeedbacks(prev => prev.map(f =>
-            f.id === id ? { ...f, status: 'approved' } : f
-        ));
-        toast.success('Feedback Approved', 'Credits have been released to the tester.');
-        setShowModal(false);
+    const handleApprove = async (id) => {
+        try {
+            await feedbackAPI.update(id, { status: 'approved' });
+            setFeedbacks(prev => prev.map(f =>
+                (f._id || f.id) === id ? { ...f, status: 'approved' } : f
+            ));
+            toast.success('Feedback Approved', 'Credits have been released to the tester.');
+            setShowModal(false);
+        } catch (err) {
+            toast.error('Error', err.message);
+        }
     };
 
-    const handleRequestClarification = (id) => {
+    const handleRequestClarification = async (id) => {
         if (!clarificationNote.trim()) {
             toast.error('Note Required', 'Please provide a clarification note.');
             return;
         }
-        setFeedbacks(prev => prev.map(f =>
-            f.id === id ? { ...f, status: 'needs-revision' } : f
-        ));
-        toast.warning('Clarification Requested', 'The tester has been notified.');
-        setShowModal(false);
-        setClarificationNote('');
+        try {
+            await feedbackAPI.update(id, { status: 'needs-revision' });
+            setFeedbacks(prev => prev.map(f =>
+                (f._id || f.id) === id ? { ...f, status: 'needs-revision' } : f
+            ));
+            toast.warning('Clarification Requested', 'The tester has been notified.');
+            setShowModal(false);
+            setClarificationNote('');
+        } catch (err) {
+            toast.error('Error', err.message);
+        }
     };
 
     const openReviewModal = (feedback) => {
@@ -234,14 +259,14 @@ function FeedbackReview() {
                             <Button
                                 variant="danger"
                                 icon={<FiMessageCircle />}
-                                onClick={() => handleRequestClarification(selectedFeedback.id)}
+                                onClick={() => handleRequestClarification(selectedFeedback._id || selectedFeedback.id)}
                             >
                                 Request Clarification
                             </Button>
                             <Button
                                 variant="success"
                                 icon={<FiCheck />}
-                                onClick={() => handleApprove(selectedFeedback.id)}
+                                onClick={() => handleApprove(selectedFeedback._id || selectedFeedback.id)}
                             >
                                 Approve & Release Credits
                             </Button>

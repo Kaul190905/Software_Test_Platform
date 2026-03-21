@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { adminTasks } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { tasksAPI } from '../../services/api';
 import Badge from '../../components/common/Badge';
 import { formatCurrency } from '../../utils/helpers';
 import { FiSearch, FiFilter, FiMoreVertical, FiExternalLink } from 'react-icons/fi';
@@ -8,8 +8,24 @@ import './AdminTasks.css';
 function AdminTasks() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredTasks = adminTasks.filter(task => {
+    useEffect(() => {
+        async function fetchTasks() {
+            try {
+                const res = await tasksAPI.list();
+                setTasks(res.tasks || []);
+            } catch (err) {
+                console.error('Failed to load tasks:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTasks();
+    }, []);
+
+    const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.appName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.developerName?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
@@ -78,7 +94,7 @@ function AdminTasks() {
                         </thead>
                         <tbody>
                             {filteredTasks.map(task => (
-                                <tr key={task.id}>
+                                <tr key={task._id || task.id}>
                                     <td>
                                         <div className="task-detail-cell">
                                             <span className="task-name">{task.appName}</span>

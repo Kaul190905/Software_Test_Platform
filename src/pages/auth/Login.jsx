@@ -51,8 +51,8 @@ function Login() {
 
         setIsLoading(true);
         try {
-            await login(formData.email, formData.password, formData.role);
-            navigate(`/${formData.role}/dashboard`);
+            const userData = await login(formData.email, formData.password);
+            navigate(`/${userData.role}/dashboard`);
         } catch (error) {
             setErrors({ submit: 'Invalid credentials. Please try again.' });
         } finally {

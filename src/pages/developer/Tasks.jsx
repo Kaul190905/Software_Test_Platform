@@ -1,18 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { developerTasks } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { getDeadlineStatus, formatCurrency } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import Loader from '../../components/common/Loader';
 import { FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEye } from 'react-icons/fi';
 import './Tasks.css';
 
 function Tasks() {
     const { user } = useAuth();
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const filteredTasks = developerTasks.filter(task => {
+    useEffect(() => {
+        async function fetchTasks() {
+            try {
+                const res = await tasksAPI.list();
+                setTasks(res.tasks || []);
+            } catch (err) {
+                console.error('Failed to load tasks:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTasks();
+    }, []);
+
+    const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.appName.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
         return matchesSearch && matchesStatus;
@@ -28,6 +45,8 @@ function Tasks() {
         const config = statusMap[status] || { label: status, variant: 'secondary' };
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
+
+    if (loading) return <Loader />;
 
     return (
         <div className="tasks-page">
@@ -74,7 +93,7 @@ function Tasks() {
                                 <th>Task Name</th>
                                 <th>Test Types</th>
                                 <th>Budget</th>
-                                <th>testers</th>
+                                <th>Testers</th>
                                 <th>Progress</th>
                                 <th>Status</th>
                                 <th>Deadline</th>
@@ -85,11 +104,11 @@ function Tasks() {
                             {filteredTasks.map(task => {
                                 const deadlineStatus = getDeadlineStatus(task.deadline);
                                 return (
-                                    <tr key={task.id}>
+                                    <tr key={task._id || task.id}>
                                         <td>
                                             <div className="task-name-cell">
                                                 <span className="task-name">{task.appName}</span>
-                                                <span className="task-id">#{task.id}</span>
+                                                <span className="task-id">#{(task._id || task.id).slice(-6)}</span>
                                             </div>
                                         </td>
                                         <td>
@@ -103,7 +122,7 @@ function Tasks() {
                                             </div>
                                         </td>
                                         <td>{formatCurrency(task.budget)}</td>
-                                        <td>{task.testersAssigned}</td>
+                                        <td>{task.testersAssigned || 0}</td>
                                         <td>
                                             <div className="progress-cell">
                                                 <div className="progress-mini">

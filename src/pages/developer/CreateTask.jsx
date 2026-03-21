@@ -2,10 +2,25 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
-import { testTypes, testingLevels } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
 import { FiGlobe, FiDollarSign, FiCalendar, FiArrowLeft, FiArrowRight, FiCheck } from 'react-icons/fi';
 import './CreateTask.css';
+
+const testTypes = [
+    { id: 'functional', name: 'Functional Testing', description: 'Verify features work as expected' },
+    { id: 'usability', name: 'Usability Testing', description: 'Evaluate user experience and interface' },
+    { id: 'security', name: 'Security Testing', description: 'Identify vulnerabilities and security flaws' },
+    { id: 'performance', name: 'Performance Testing', description: 'Test speed, scalability, and stability' },
+    { id: 'accessibility', name: 'Accessibility Testing', description: 'Ensure compliance with a11y standards' },
+    { id: 'compatibility', name: 'Compatibility Testing', description: 'Test across browsers and devices' },
+];
+
+const testingLevels = [
+    { id: 'basic', name: 'Basic', description: 'General functional testing', creditMultiplier: 1 },
+    { id: 'intermediate', name: 'Intermediate', description: 'Detailed testing with edge cases', creditMultiplier: 1.5 },
+    { id: 'expert', name: 'Expert', description: 'In-depth testing with security focus', creditMultiplier: 2 },
+];
 
 function CreateTask() {
     const navigate = useNavigate();
@@ -65,7 +80,7 @@ function CreateTask() {
 
         if (step === 3) {
             if (!formData.budget || formData.budget < 50) {
-                newErrors.budget = 'Minimum budget is $50';
+                newErrors.budget = 'Minimum budget is ₹50';
             }
             if (!formData.deadline) {
                 newErrors.deadline = 'Deadline is required';
@@ -92,16 +107,28 @@ function CreateTask() {
         if (!validateStep(3)) return;
 
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        toast.success('Task Created!', 'Your testing task has been posted.');
-        navigate('/developer/payment', {
-            state: {
-                task: formData,
-                amount: formData.budget * 1.1 // Include platform fee
-            }
-        });
+        try {
+            await tasksAPI.create({
+                appName: formData.appName,
+                appUrl: formData.appUrl,
+                description: formData.description,
+                testingLevel: formData.testingLevel,
+                testTypes: formData.selectedTestTypes,
+                budget: Number(formData.budget),
+                deadline: formData.deadline,
+            });
+            toast.success('Task Created!', 'Your testing task has been posted.');
+            navigate('/developer/payment', {
+                state: {
+                    task: formData,
+                    amount: formData.budget * 1.1
+                }
+            });
+        } catch (err) {
+            toast.error('Error', err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const selectedLevel = testingLevels.find(l => l.id === formData.testingLevel);

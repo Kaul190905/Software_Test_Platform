@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { testerActiveTasks } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -10,6 +10,22 @@ import './MyTasks.css';
 function MyTasks() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('active');
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchTasks() {
+            try {
+                const res = await tasksAPI.myTasks();
+                setTasks(res.tasks || []);
+            } catch (err) {
+                console.error('Failed to load tasks:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTasks();
+    }, []);
 
     const getStatusBadge = (status) => {
         const statusMap = {
@@ -46,14 +62,14 @@ function MyTasks() {
             </div>
 
             <div className="tasks-grid">
-                {testerActiveTasks.map(task => (
-                    <div key={task.id} className="card task-card">
+                {tasks.map(task => (
+                    <div key={task._id || task.id} className="card task-card">
                         <div className="task-card-header">
                             <div className="company-info">
                                 <div className="company-logo">
-                                    {task.company.split(' ').map(n => n[0]).join('')}
+                                    {(task.company || task.developerCompany || 'Company').split(' ').map(n => n[0]).join('')}
                                 </div>
-                                <span className="company-name">{task.company}</span>
+                                <span className="company-name">{task.company || task.developerCompany || ''}</span>
                             </div>
                             {getStatusBadge(task.status)}
                         </div>
@@ -67,7 +83,7 @@ function MyTasks() {
                             </div>
                             <div className="meta-item">
                                 <FiCheckCircle size={14} />
-                                <span>Credits: {task.credits}</span>
+                                <span>Credits: {task.credits || task.budget || 0}</span>
                             </div>
                         </div>
 
@@ -82,7 +98,7 @@ function MyTasks() {
                         </div>
 
                         <div className="task-card-footer">
-                            <Link to={`/tester/submit/${task.taskId}`}>
+                            <Link to={`/tester/submit/${task._id || task.taskId || task.id}`}>
                                 <Button variant="primary" fullWidth icon={<FiArrowRight />} iconPosition="right">
                                     {task.status === 'in-progress' ? 'Continue Testing' : 'View Submission'}
                                 </Button>

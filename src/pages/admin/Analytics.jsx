@@ -1,9 +1,57 @@
-import { adminStats, analyticsData } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { analyticsAPI } from '../../services/api';
 import Chart from '../../components/common/Chart';
+import Loader from '../../components/common/Loader';
 import { FiUsers, FiActivity, FiDollarSign, FiZap } from 'react-icons/fi';
 import './Analytics.css';
 
 function Analytics() {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchAnalytics() {
+            try {
+                const res = await analyticsAPI.overview();
+                setData(res);
+            } catch (err) {
+                console.error('Failed to load analytics:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchAnalytics();
+    }, []);
+
+    if (loading || !data) return <Loader />;
+
+    const stats = data.stats || {};
+    const charts = data.charts || {};
+
+    // Build chart data from API response or use defaults
+    const tasksOverTimeData = charts.tasksOverTime || {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{ label: 'Tasks Created', data: [10, 15, 20, 25, 30, 35] }],
+    };
+
+    const revenueData = charts.platformRevenue
+        ? {
+            labels: charts.platformRevenue.labels,
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: charts.platformRevenue.data,
+                backgroundColor: '#6366f1',
+            }],
+        }
+        : {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: [5000, 7000, 8500, 9200, 11000, 13500],
+                backgroundColor: '#6366f1',
+            }],
+        };
+
     return (
         <div className="analytics-page">
             <div className="page-header">
@@ -17,8 +65,8 @@ function Analytics() {
                 <div className="card analytics-stat-card">
                     <div className="stat-info">
                         <span className="stat-label">Total Users</span>
-                        <h2 className="stat-value">{adminStats.totalUsers}</h2>
-                        <span className="stat-trend positive">+{adminStats.usersChange}% growth</span>
+                        <h2 className="stat-value">{stats.totalUsers || 0}</h2>
+                        <span className="stat-trend positive">+{stats.usersChange || 0}% growth</span>
                     </div>
                     <FiUsers className="stat-icon" />
                 </div>
@@ -26,8 +74,8 @@ function Analytics() {
                 <div className="card analytics-stat-card">
                     <div className="stat-info">
                         <span className="stat-label">Active Tasks</span>
-                        <h2 className="stat-value">{adminStats.activeTasks}</h2>
-                        <span className="stat-trend">89 ongoing sessions</span>
+                        <h2 className="stat-value">{stats.activeTasks || 0}</h2>
+                        <span className="stat-trend">ongoing sessions</span>
                     </div>
                     <FiActivity className="stat-icon" />
                 </div>
@@ -35,8 +83,8 @@ function Analytics() {
                 <div className="card analytics-stat-card">
                     <div className="stat-info">
                         <span className="stat-label">Total Revenue</span>
-                        <h2 className="stat-value">${adminStats.platformRevenue}</h2>
-                        <span className="stat-trend positive">+{adminStats.revenueChange}% growth</span>
+                        <h2 className="stat-value">₹{stats.platformRevenue || 0}</h2>
+                        <span className="stat-trend positive">+{stats.revenueChange || 0}% growth</span>
                     </div>
                     <FiDollarSign className="stat-icon" />
                 </div>
@@ -57,7 +105,7 @@ function Analytics() {
                         <h3 className="card-title">Tasks & Completion Overview</h3>
                     </div>
                     <div className="chart-wrapper">
-                        <Chart type="line" data={analyticsData.tasksOverTime} height={300} />
+                        <Chart type="line" data={tasksOverTimeData} height={300} />
                     </div>
                 </div>
 
@@ -66,14 +114,7 @@ function Analytics() {
                         <h3 className="card-title">Revenue Growth</h3>
                     </div>
                     <div className="chart-wrapper">
-                        <Chart type="bar" data={{
-                            labels: analyticsData.platformRevenue.labels,
-                            datasets: [{
-                                label: 'Monthly Revenue',
-                                data: analyticsData.platformRevenue.data,
-                                backgroundColor: '#6366f1'
-                            }]
-                        }} height={300} />
+                        <Chart type="bar" data={revenueData} height={300} />
                     </div>
                 </div>
             </div>

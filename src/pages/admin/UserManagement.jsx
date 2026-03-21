@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { adminUsers } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { usersAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -10,13 +10,28 @@ import './UserManagement.css';
 
 function UserManagement() {
     const toast = useToast();
-    const [users, setUsers] = useState(adminUsers);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(null);
+
+    useEffect(() => {
+        async function fetchUsers() {
+            try {
+                const res = await usersAPI.list();
+                setUsers(res.users || []);
+            } catch (err) {
+                console.error('Failed to load users:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchUsers();
+    }, []);
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -46,12 +61,17 @@ function UserManagement() {
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
 
-    const handleStatusChange = (userId, newStatus) => {
-        setUsers(prev => prev.map(u =>
-            u.id === userId ? { ...u, status: newStatus } : u
-        ));
-        setShowDropdown(null);
-        toast.success('Status Updated', `User status changed to ${newStatus}`);
+    const handleStatusChange = async (userId, newStatus) => {
+        try {
+            await usersAPI.update(userId, { status: newStatus });
+            setUsers(prev => prev.map(u =>
+                (u._id || u.id) === userId ? { ...u, status: newStatus } : u
+            ));
+            setShowDropdown(null);
+            toast.success('Status Updated', `User status changed to ${newStatus}`);
+        } catch (err) {
+            toast.error('Error', err.message);
+        }
     };
 
     const handleDelete = (userId) => {
@@ -151,7 +171,7 @@ function UserManagement() {
                         </thead>
                         <tbody>
                             {filteredUsers.map(user => (
-                                <tr key={user.id}>
+                                <tr key={user._id || user.id}>
                                     <td>
                                         <div className="user-cell">
                                             <div className="avatar">{user.name.split(' ').map(n => n[0]).join('')}</div>
@@ -165,7 +185,7 @@ function UserManagement() {
                                     <td>{getStatusBadge(user.status)}</td>
                                     <td className="number-cell">{user.completedTasks || 0}</td>
                                     <td className="number-cell">{user.credits?.toLocaleString() || 0}</td>
-                                    <td className="date-cell">{formatDate(user.joinedAt)}</td>
+                                    <td className="date-cell">{formatDate(user.joinedAt || user.createdAt)}</td>
                                     <td>
                                         <div className="actions-cell">
                                             <button

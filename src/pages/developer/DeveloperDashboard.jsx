@@ -1,42 +1,70 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { developerStats, developerTasks, developerFeedback } from '../../data/mockData';
+import { tasksAPI, feedbackAPI } from '../../services/api';
 import { formatCurrency, formatDate, getDeadlineStatus } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
+import Loader from '../../components/common/Loader';
 import { FiPlus, FiClipboard, FiCheckCircle, FiDollarSign, FiMessageSquare, FiArrowUpRight, FiTrendingUp, FiTrendingDown, FiStar } from 'react-icons/fi';
 import './DeveloperDashboard.css';
 
 function DeveloperDashboard() {
     const { user } = useAuth();
+    const [dashStats, setDashStats] = useState(null);
+    const [tasks, setTasks] = useState([]);
+    const [feedback, setFeedback] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [statsRes, tasksRes, feedbackRes] = await Promise.all([
+                    tasksAPI.getStats(),
+                    tasksAPI.list(),
+                    feedbackAPI.list(),
+                ]);
+                setDashStats(statsRes);
+                setTasks(tasksRes.tasks || []);
+                setFeedback(feedbackRes.feedback || []);
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
+
+    if (loading || !dashStats) return <Loader />;
 
     const stats = [
         {
             label: 'Active Projects',
-            value: developerStats.activeProjects,
+            value: dashStats.activeProjects,
             icon: FiClipboard,
             iconClass: 'primary',
-            change: developerStats.activeProjectsChange,
+            change: dashStats.activeProjectsChange,
             positive: true,
         },
         {
             label: 'Completed Projects',
-            value: developerStats.completedProjects,
+            value: dashStats.completedProjects,
             icon: FiCheckCircle,
             iconClass: 'success',
-            change: developerStats.completedProjectsChange,
+            change: dashStats.completedProjectsChange,
             positive: true,
         },
         {
             label: 'Total Budget Spent',
-            value: formatCurrency(developerStats.totalBudgetSpent),
+            value: formatCurrency(dashStats.totalBudgetSpent),
             icon: FiDollarSign,
             iconClass: 'secondary',
         },
         {
             label: 'Feedback Received',
-            value: developerStats.feedbackReceived,
+            value: feedback.length,
             icon: FiMessageSquare,
             iconClass: 'accent',
         },
@@ -115,14 +143,14 @@ function DeveloperDashboard() {
                             </Link>
                         </div>
                         <div className="task-list">
-                            {developerTasks.slice(0, 4).map(task => {
+                            {tasks.slice(0, 4).map(task => {
                                 const deadlineStatus = getDeadlineStatus(task.deadline);
                                 return (
-                                    <div key={task.id} className="task-item">
+                                    <div key={task._id || task.id} className="task-item">
                                         <div className="task-info">
                                             <h4 className="task-name">{task.appName}</h4>
                                             <p className="task-meta">
-                                                {task.testTypes.join(', ')} • {task.testersAssigned} testers assigned
+                                                {task.testTypes.join(', ')} • {task.testersAssigned || 0} testers assigned
                                             </p>
                                         </div>
                                         <div className="task-status">
@@ -173,29 +201,29 @@ function DeveloperDashboard() {
                             </Link>
                         </div>
                         <div className="feedback-grid">
-                            {developerFeedback.slice(0, 3).map(feedback => (
-                                <div key={feedback.id} className="feedback-card">
+                            {feedback.slice(0, 3).map(fb => (
+                                <div key={fb._id || fb.id} className="feedback-card">
                                     <div className="feedback-header">
                                         <div className="feedback-tester">
-                                            <div className="avatar sm">{feedback.testerName.split(' ').map(n => n[0]).join('')}</div>
+                                            <div className="avatar sm">{(fb.testerName || 'U').split(' ').map(n => n[0]).join('')}</div>
                                             <div>
-                                                <p className="tester-name">{feedback.testerName}</p>
+                                                <p className="tester-name">{fb.testerName}</p>
                                                 <p className="tester-rating">
                                                     <FiStar size={14} style={{ color: '#f59e0b', marginRight: '4px' }} />
-                                                    {feedback.testerRating}
+                                                    {fb.testerRating}
                                                 </p>
                                             </div>
                                         </div>
-                                        <AIBadge status={feedback.aiVerification} />
+                                        <AIBadge status={fb.aiVerification} />
                                     </div>
-                                    <p className="feedback-task">{feedback.taskName}</p>
-                                    <p className="feedback-observations">{feedback.observations}</p>
+                                    <p className="feedback-task">{fb.taskName}</p>
+                                    <p className="feedback-observations">{fb.observations}</p>
                                     <div className="feedback-footer">
-                                        <span className="feedback-date">{formatDate(feedback.submittedAt)}</span>
+                                        <span className="feedback-date">{formatDate(fb.submittedAt || fb.createdAt)}</span>
                                         <Badge
-                                            variant={feedback.status === 'approved' ? 'success' : feedback.status === 'needs-revision' ? 'warning' : 'info'}
+                                            variant={fb.status === 'approved' ? 'success' : fb.status === 'needs-revision' ? 'warning' : 'info'}
                                         >
-                                            {feedback.status}
+                                            {fb.status}
                                         </Badge>
                                     </div>
                                 </div>

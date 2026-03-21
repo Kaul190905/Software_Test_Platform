@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { availableTasks } from '../../data/mockData';
+import { tasksAPI, feedbackAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 import { FiUpload, FiCheckCircle, FiInfo, FiVideo, FiImage } from 'react-icons/fi';
 import './SubmitProof.css';
@@ -15,16 +15,37 @@ function SubmitProof() {
         proofType: 'screenshots',
         issuesFound: 'none'
     });
+    const [task, setTask] = useState({ appName: 'Loading...' });
 
-    const task = availableTasks.find(t => t.id === taskId) || availableTasks[0];
+    useEffect(() => {
+        async function fetchTask() {
+            try {
+                const res = await tasksAPI.get(taskId);
+                setTask(res.task || res);
+            } catch (err) {
+                console.error('Failed to load task:', err);
+            }
+        }
+        if (taskId) fetchTask();
+    }, [taskId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsLoading(false);
-        navigate('/tester/status');
+        try {
+            await feedbackAPI.submit({
+                task: taskId,
+                observations: formData.observations,
+                proofType: formData.proofType,
+                testResult: formData.issuesFound === 'none' ? 'pass' : formData.issuesFound === 'minor' ? 'issues-found' : 'fail',
+                proofUrl: 'uploaded-proof',
+            });
+            setIsLoading(false);
+            navigate('/tester/status');
+        } catch (err) {
+            setIsLoading(false);
+            console.error(err);
+        }
     };
 
     return (

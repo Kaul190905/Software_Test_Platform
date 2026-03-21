@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { availableTasks, testingLevels } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { formatCredits, formatDate, getDeadlineStatus } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -8,19 +8,41 @@ import { FiSearch, FiFilter, FiCalendar, FiClock, FiChevronDown } from 'react-ic
 import './Marketplace.css';
 
 function Marketplace() {
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedLevel, setSelectedLevel] = useState('all');
     const [selectedTestType, setSelectedTestType] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
     const [showFilters, setShowFilters] = useState(false);
 
+    const testingLevels = [
+        { id: 'basic', name: 'Basic' },
+        { id: 'intermediate', name: 'Intermediate' },
+        { id: 'expert', name: 'Expert' },
+    ];
+
+    useEffect(() => {
+        async function fetchTasks() {
+            try {
+                const res = await tasksAPI.marketplace();
+                setTasks(res.tasks || []);
+            } catch (err) {
+                console.error('Failed to load marketplace:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTasks();
+    }, []);
+
     const testTypes = ['UI Testing', 'Functional', 'Performance', 'Security', 'Usability'];
 
-    const filteredTasks = availableTasks.filter(task => {
-        const matchesSearch = task.appName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            task.companyName.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesLevel = selectedLevel === 'all' || task.level.toLowerCase() === selectedLevel;
-        const matchesType = selectedTestType === 'all' || task.testTypes.includes(selectedTestType);
+    const filteredTasks = tasks.filter(task => {
+        const matchesSearch = (task.appName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (task.companyName || task.developerCompany || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesLevel = selectedLevel === 'all' || (task.level || task.testingLevel || '').toLowerCase() === selectedLevel;
+        const matchesType = selectedTestType === 'all' || (task.testTypes || []).includes(selectedTestType);
         return matchesSearch && matchesLevel && matchesType;
     }).sort((a, b) => {
         if (sortBy === 'newest') return new Date(b.postedAt) - new Date(a.postedAt);
@@ -133,15 +155,15 @@ function Marketplace() {
                 {filteredTasks.map(task => {
                     const deadline = getDeadlineStatus(task.deadline);
                     return (
-                        <div key={task.id} className="card task-card">
+                        <div key={task._id || task.id} className="card task-card">
                             <div className="task-card-header">
-                                <Badge variant="primary">{task.level}</Badge>
-                                <span className="spots-left">{task.openSlots} spots left</span>
+                                <Badge variant="primary">{task.level || task.testingLevel}</Badge>
+                                <span className="spots-left">{task.openSlots || '?'} spots left</span>
                             </div>
 
                             <div className="task-card-body">
                                 <h3 className="task-name">{task.appName}</h3>
-                                <p className="task-company">{task.companyName}</p>
+                                <p className="task-company">{task.companyName || task.developerCompany || ''}</p>
 
                                 <div className="task-test-types">
                                     {task.testTypes.map(type => (
@@ -169,10 +191,10 @@ function Marketplace() {
 
                             <div className="task-card-footer">
                                 <div className="task-credits">
-                                    <span className="credits-amount">{formatCredits(task.credits)}</span>
+                                    <span className="credits-amount">{formatCredits(task.credits || task.budget || 0)}</span>
                                     <span className="credits-text">Credits</span>
                                 </div>
-                                <Link to={`/tester/task/${task.id}`}>
+                                <Link to={`/tester/task/${task._id || task.id}`}>
                                     <Button variant="primary">View & Accept</Button>
                                 </Link>
                             </div>

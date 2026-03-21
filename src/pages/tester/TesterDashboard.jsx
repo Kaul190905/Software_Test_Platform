@@ -1,27 +1,55 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { testerStats, testerActiveTasks, availableTasks } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { formatCurrency, formatCredits, formatDate, getDeadlineStatus } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
+import Loader from '../../components/common/Loader';
 import { FiDollarSign, FiClipboard, FiStar, FiCreditCard, FiArrowUpRight, FiCalendar, FiTrendingUp, FiExternalLink } from 'react-icons/fi';
 import './TesterDashboard.css';
 
 function TesterDashboard() {
     const { user } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [activeTasks, setActiveTasks] = useState([]);
+    const [marketplaceTasks, setMarketplaceTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const stats = [
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [statsRes, myTasksRes, marketRes] = await Promise.all([
+                    tasksAPI.getStats(),
+                    tasksAPI.myTasks(),
+                    tasksAPI.marketplace(),
+                ]);
+                setStats(statsRes);
+                setActiveTasks(myTasksRes.tasks || []);
+                setMarketplaceTasks(marketRes.tasks || []);
+            } catch (err) {
+                console.error('Failed to load dashboard:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
+
+    if (loading || !stats) return <Loader />;
+
+    const statCards = [
         {
             label: 'Available Credits',
-            value: formatCredits(testerStats.availableCredits),
+            value: formatCredits(stats.availableCredits || 0),
             icon: FiCreditCard,
             iconClass: 'primary',
-            subtext: `≈ ${formatCurrency(testerStats.availableCredits * 0.1)}`,
+            subtext: `≈ ${formatCurrency((stats.availableCredits || 0) * 0.1)}`,
         },
         {
             label: 'Total Earnings',
-            value: formatCurrency(testerStats.totalEarnings),
+            value: formatCurrency(stats.totalEarnings || 0),
             icon: FiDollarSign,
             iconClass: 'success',
             change: '+12%',
@@ -29,16 +57,16 @@ function TesterDashboard() {
         },
         {
             label: 'Completed Tasks',
-            value: testerStats.completedTasks,
+            value: stats.completedTasks || 0,
             icon: FiClipboard,
             iconClass: 'secondary',
         },
         {
             label: 'Rating',
-            value: testerStats.rating.toFixed(1),
+            value: (stats.rating || 0).toFixed(1),
             icon: FiStar,
             iconClass: 'warning',
-            subtext: `${testerStats.reviewCount} reviews`,
+            subtext: `${stats.reviewCount || 0} reviews`,
         },
     ];
 
@@ -71,7 +99,7 @@ function TesterDashboard() {
 
             {/* Stats Grid */}
             <div className="stats-grid">
-                {stats.map((stat, index) => (
+                {statCards.map((stat, index) => (
                     <div key={index} className="card stats-card">
                         <div className={`stats-icon ${stat.iconClass}`}>
                             <stat.icon size={24} />
@@ -103,12 +131,12 @@ function TesterDashboard() {
                             </Link>
                         </div>
 
-                        {testerActiveTasks.length > 0 ? (
+                        {activeTasks.length > 0 ? (
                             <div className="active-tasks-list">
-                                {testerActiveTasks.map(task => {
+                                {activeTasks.map(task => {
                                     const deadline = getDeadlineStatus(task.deadline);
                                     return (
-                                        <div key={task.id} className="active-task-item">
+                                        <div key={task._id || task.id} className="active-task-item">
                                             <div className="task-main">
                                                 <h4 className="task-app-name">{task.appName}</h4>
                                                 <p className="task-test-types">{task.testTypes.join(', ')}</p>
@@ -119,11 +147,11 @@ function TesterDashboard() {
                                                 <Badge variant={deadline.color} size="sm">{deadline.label}</Badge>
                                             </div>
                                             <div className="task-credits">
-                                                <span className="credits-value">{formatCredits(task.credits)}</span>
+                                                <span className="credits-value">{formatCredits(task.credits || task.budget || 0)}</span>
                                                 <span className="credits-label">Credits</span>
                                             </div>
                                             <div className="task-action">
-                                                <Link to={`/tester/submit/${task.id}`}>
+                                                <Link to={`/tester/submit/${task._id || task.id}`}>
                                                     <Button variant="primary" size="sm">
                                                         Submit Work
                                                     </Button>
@@ -168,14 +196,14 @@ function TesterDashboard() {
                             </Link>
                         </div>
                         <div className="available-tasks-grid">
-                            {availableTasks.slice(0, 3).map(task => (
-                                <div key={task.id} className="available-task-card">
+                            {marketplaceTasks.slice(0, 3).map(task => (
+                                <div key={task._id || task.id} className="available-task-card">
                                     <div className="task-header">
-                                        <Badge variant="primary">{task.level}</Badge>
-                                        <span className="task-posted">Posted {formatDate(task.postedAt)}</span>
+                                        <Badge variant="primary">{task.level || task.testingLevel}</Badge>
+                                        <span className="task-posted">Posted {formatDate(task.postedAt || task.createdAt)}</span>
                                     </div>
                                     <h4 className="task-title">{task.appName}</h4>
-                                    <p className="task-company">{task.companyName}</p>
+                                    <p className="task-company">{task.companyName || task.company || ''}</p>
                                     <div className="task-tags">
                                         {task.testTypes.slice(0, 2).map(type => (
                                             <span key={type} className="task-tag">{type}</span>
@@ -186,10 +214,10 @@ function TesterDashboard() {
                                     </div>
                                     <div className="task-footer">
                                         <div className="task-reward">
-                                            <span className="reward-value">{formatCredits(task.credits)}</span>
+                                            <span className="reward-value">{formatCredits(task.credits || task.budget || 0)}</span>
                                             <span className="reward-label">Credits</span>
                                         </div>
-                                        <Link to={`/tester/task/${task.id}`}>
+                                        <Link to={`/tester/task/${task._id || task.id}`}>
                                             <Button variant="ghost" size="sm">View Details</Button>
                                         </Link>
                                     </div>
