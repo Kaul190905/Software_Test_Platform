@@ -107,28 +107,16 @@ function CreateTask() {
         if (!validateStep(3)) return;
 
         setIsLoading(true);
-        try {
-            await tasksAPI.create({
-                appName: formData.appName,
-                appUrl: formData.appUrl,
-                description: formData.description,
-                testingLevel: formData.testingLevel,
-                testTypes: formData.selectedTestTypes,
-                budget: Number(formData.budget),
-                deadline: formData.deadline,
-            });
-            toast.success('Task Created!', 'Your testing task has been posted.');
-            navigate('/developer/payment', {
-                state: {
-                    task: formData,
-                    amount: formData.budget * 1.1
-                }
-            });
-        } catch (err) {
-            toast.error('Error', err.message);
-        } finally {
-            setIsLoading(false);
-        }
+        // Simulate delay before redirecting to payment
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsLoading(false);
+
+        navigate('/developer/payments', {
+            state: {
+                task: formData,
+                amount: formData.budget * 1.1 // Include platform fee
+            }
+        });
     };
 
     const selectedLevel = testingLevels.find(l => l.id === formData.testingLevel);

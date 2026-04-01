@@ -1,26 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import {
-    FiMenu,
-    FiX,
-    FiBell,
-    FiUser,
-    FiLogOut,
-    FiSettings,
-    FiChevronDown
-} from 'react-icons/fi';
-import { useState, useRef, useEffect } from 'react';
+import { FiMenu, FiX, FiBell } from 'react-icons/fi';
+import { useState } from 'react';
 import { getInitials } from '../../utils/helpers';
+import NotificationModal from './NotificationModal';
 import './Navbar.css';
 
 function Navbar({ onMenuToggle, isSidebarOpen }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-    const profileRef = useRef(null);
-    const notificationsRef = useRef(null);
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
     // Mock notifications
     const notifications = [
@@ -31,19 +21,6 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
 
     const unreadCount = notifications.filter(n => n.unread).length;
 
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (profileRef.current && !profileRef.current.contains(event.target)) {
-                setIsProfileOpen(false);
-            }
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-                setIsNotificationsOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const handleLogout = () => {
         logout();
@@ -92,99 +69,38 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
 
             <div className="navbar-right">
                 {/* Notifications */}
-                <div className="navbar-dropdown" ref={notificationsRef}>
-                    <button
-                        className="navbar-icon-btn"
-                        onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                        aria-label="Notifications"
-                    >
-                        <FiBell size={20} />
-                        {unreadCount > 0 && (
-                            <span className="notification-badge">{unreadCount}</span>
+                <button
+                    className="navbar-icon-btn"
+                    onClick={() => setIsNotificationModalOpen(true)}
+                    aria-label="Notifications"
+                >
+                    <FiBell size={20} />
+                    {unreadCount > 0 && (
+                        <span className="notification-badge">{unreadCount}</span>
+                    )}
+                </button>
+
+                {/* Profile display only */}
+                <div className="navbar-profile-btn">
+                    <div className="avatar sm">
+                        {user?.avatar ? (
+                            <img src={user.avatar} alt={user.name} />
+                        ) : (
+                            getInitials(user?.name || 'User')
                         )}
-                    </button>
-
-                    {isNotificationsOpen && (
-                        <div className="dropdown-menu notifications-menu">
-                            <div className="dropdown-header">
-                                <span className="dropdown-title">Notifications</span>
-                                <button className="dropdown-action">Mark all read</button>
-                            </div>
-                            <div className="dropdown-content">
-                                {notifications.map(notification => (
-                                    <div
-                                        key={notification.id}
-                                        className={`notification-item ${notification.unread ? 'unread' : ''}`}
-                                    >
-                                        <div className="notification-dot" />
-                                        <div className="notification-info">
-                                            <p className="notification-title">{notification.title}</p>
-                                            <p className="notification-message">{notification.message}</p>
-                                            <span className="notification-time">{notification.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="dropdown-footer">
-                                <Link to="/notifications">View all notifications</Link>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Profile Dropdown */}
-                <div className="navbar-dropdown" ref={profileRef}>
-                    <button
-                        className="navbar-profile-btn"
-                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    >
-                        <div className="avatar sm">
-                            {user?.avatar ? (
-                                <img src={user.avatar} alt={user.name} />
-                            ) : (
-                                getInitials(user?.name || 'User')
-                            )}
-                        </div>
-                        <div className="navbar-profile-info">
-                            <span className="navbar-profile-name">{user?.name || 'User'}</span>
-                            <span className="navbar-profile-role">{getRoleLabel(user?.role)}</span>
-                        </div>
-                        <FiChevronDown size={16} className={isProfileOpen ? 'rotated' : ''} />
-                    </button>
-
-                    {isProfileOpen && (
-                        <div className="dropdown-menu profile-menu">
-                            <div className="dropdown-user-info">
-                                <div className="avatar lg">
-                                    {user?.avatar ? (
-                                        <img src={user.avatar} alt={user.name} />
-                                    ) : (
-                                        getInitials(user?.name || 'User')
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="dropdown-user-name">{user?.name}</p>
-                                    <p className="dropdown-user-email">{user?.email}</p>
-                                </div>
-                            </div>
-                            <div className="dropdown-divider" />
-                            <Link to="/profile" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                                <FiUser size={16} />
-                                <span>Profile</span>
-                            </Link>
-                            <Link to="/settings" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                                <FiSettings size={16} />
-                                <span>Settings</span>
-                            </Link>
-                            <div className="dropdown-divider" />
-                            <button className="dropdown-item logout" onClick={handleLogout}>
-                                <FiLogOut size={16} />
-                                <span>Log out</span>
-                            </button>
-                        </div>
-                    )}
+                    </div>
+                    <div className="navbar-profile-info">
+                        <span className="navbar-profile-name">{user?.name || 'User'}</span>
+                        <span className="navbar-profile-role">{getRoleLabel(user?.role)}</span>
+                    </div>
                 </div>
             </div>
+
+            <NotificationModal 
+                isOpen={isNotificationModalOpen} 
+                onClose={() => setIsNotificationModalOpen(false)} 
+                notifications={notifications} 
+            />
         </nav>
     );
 }

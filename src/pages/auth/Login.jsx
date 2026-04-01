@@ -78,9 +78,9 @@ function Login() {
                 {/* Role Selector */}
                 <div className="form-group">
                     <label className="form-label">Select your role</label>
-                    <div className="role-selector">
+                    <div className="role-tabs">
                         {roles.map(role => (
-                            <label key={role.id} className="role-option">
+                            <label key={role.id} className="role-tab">
                                 <input
                                     type="radio"
                                     name="role"
@@ -88,9 +88,9 @@ function Login() {
                                     checked={formData.role === role.id}
                                     onChange={handleChange}
                                 />
-                                <div className="role-card">
-                                    <span className="role-icon">{role.icon}</span>
-                                    <span className="role-label">{role.label}</span>
+                                <div className="role-tab-content">
+                                    <span className="role-tab-icon">{role.icon}</span>
+                                    <span>{role.label}</span>
                                 </div>
                             </label>
                         ))}
