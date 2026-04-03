@@ -50,9 +50,9 @@ function Sidebar({ isOpen, onClose }) {
     const adminLinks = [
         { path: '/admin/dashboard', icon: FiHome, label: 'Dashboard' },
         { path: '/admin/users', icon: FiUsers, label: 'Users' },
+        { path: '/admin/requests', icon: FiZap, label: 'User Requests' },
         { path: '/admin/tasks', icon: FiActivity, label: 'Tasks' },
         { path: '/admin/verification', icon: FiShield, label: 'Verification' },
-        { path: '/admin/analytics', icon: FiPieChart, label: 'Analytics' },
     ];
 
     const getLinks = () => {

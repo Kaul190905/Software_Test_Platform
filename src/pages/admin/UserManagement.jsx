@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { adminUsers } from '../../data/mockData';
+import { useNavigate } from 'react-router-dom';
+import { adminUsers, pendingUsers } from '../../data/mockData';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Modal from '../../components/common/Modal';
 import { useToast } from '../../components/common/Toast';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX, FiUsers } from 'react-icons/fi';
 import './UserManagement.css';
 
 function UserManagement() {
+    const navigate = useNavigate();
     const toast = useToast();
     const [users, setUsers] = useState(adminUsers);
     const [searchQuery, setSearchQuery] = useState('');
@@ -73,8 +75,12 @@ function UserManagement() {
                     <h1 className="page-title">User Management</h1>
                     <p className="page-subtitle">Manage platform users and their permissions</p>
                 </div>
-                <Button variant="primary" icon={<FiPlus />}>
-                    Add User
+                <Button 
+                    variant="primary" 
+                    icon={<FiUsers />}
+                    onClick={() => navigate('/admin/requests')}
+                >
+                    User Request {pendingUsers.length > 0 && <span className="btn-badge">{pendingUsers.length}</span>}
                 </Button>
             </div>
 

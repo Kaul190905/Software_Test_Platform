@@ -257,8 +257,42 @@ export const adminUsers = [
     { id: 'dev-003', name: 'Robert Wilson', email: 'robert@enterprise.com', role: 'developer', status: 'active', completedTasks: 25, credits: 12500, joinedAt: '2023-12-10' },
     { id: 'test-003', name: 'Lisa QA', email: 'lisa@qaexpert.com', role: 'tester', status: 'active', completedTasks: 67, credits: 5200, joinedAt: '2024-01-02' },
     { id: 'dev-004', name: 'Maria Garcia', email: 'maria@fintech.com', role: 'developer', status: 'suspended', completedTasks: 3, credits: 1500, joinedAt: '2024-02-01' },
-    { id: 'test-004', name: 'David Test', email: 'david@tester.io', role: 'tester', status: 'pending', completedTasks: 0, credits: 0, joinedAt: '2024-02-05' },
     { id: 'test-005', name: 'Anna Beta', email: 'anna@betatest.com', role: 'tester', status: 'active', completedTasks: 203, credits: 16200, joinedAt: '2023-10-15' },
+];
+
+export const pendingUsers = [
+    { 
+        id: 'req-001', 
+        name: 'David Test', 
+        email: 'david@tester.io', 
+        role: 'tester', 
+        status: 'pending', 
+        joinedAt: '2024-02-05',
+        experience: '3 years in manual testing',
+        skills: ['Functional', 'Usability'],
+        bio: 'I am a passionate tester looking to help developers improve their apps.'
+    },
+    { 
+        id: 'req-002', 
+        name: 'Alex Dev', 
+        email: 'alex@code.com', 
+        role: 'developer', 
+        status: 'pending', 
+        joinedAt: '2024-02-06',
+        company: 'Freelance',
+        bio: 'React developer interested in high-quality QA for my projects.'
+    },
+    { 
+        id: 'req-003', 
+        name: 'Jessica QA', 
+        email: 'jessica@quality.org', 
+        role: 'tester', 
+        status: 'pending', 
+        joinedAt: '2024-02-07',
+        experience: '5 years automation',
+        skills: ['Selenium', 'Cypress', 'Performance'],
+        bio: 'Expert in automation testing and performance optimization.'
+    },
 ];
 
 // Credit logs for admin dashboard
