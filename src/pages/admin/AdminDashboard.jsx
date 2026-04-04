@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { tasksAPI, usersAPI, transactionsAPI } from '../../services/api';
+import { useState } from 'react';
+import { adminStats, adminUsers, adminCreditLogs } from '../../data/mockData';
 import { formatCurrency, formatCredits, formatDate } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
-import { FiUsers, FiDollarSign, FiActivity, FiAlertTriangle, FiArrowUpRight, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
+import { FiUsers, FiDollarSign, FiActivity, FiAlertTriangle, FiArrowUpRight, FiTrendingUp, FiTrendingDown, FiZap } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 
@@ -39,11 +39,17 @@ function AdminDashboard() {
     const stats = [
         {
             label: 'Total Users',
-            value: dashStats.totalUsers || 0,
+            value: adminStats.totalUsers,
             icon: FiUsers,
             iconClass: 'primary',
             change: dashStats.usersChange || 0,
             positive: true,
+        },
+        {
+            label: 'Total Developers',
+            value: adminStats.totalDevelopers,
+            icon: FiUsers,
+            iconClass: 'primary',
         },
         {
             label: 'Platform Revenue',
@@ -61,7 +67,7 @@ function AdminDashboard() {
         },
         {
             label: 'Disputes Pending',
-            value: dashStats.disputesPending || 0,
+            value: adminStats.disputesPending,
             icon: FiAlertTriangle,
             iconClass: 'warning',
         },
@@ -251,6 +257,16 @@ function AdminDashboard() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                {/* Tasks & Completion Overview */}
+                <div className="col-12" style={{ marginTop: 'var(--space-6)' }}>
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Tasks & Completion Overview</h3>
+                        </div>
+                        <Chart type="line" data={analyticsData.tasksOverTime} height={300} />
                     </div>
                 </div>
 

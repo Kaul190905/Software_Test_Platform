@@ -29,13 +29,15 @@ import SubmitFeedback from './pages/tester/SubmitFeedback';
 import MyTasks from './pages/tester/MyTasks';
 import Wallet from './pages/tester/Wallet';
 import Status from './pages/tester/Status';
+import TaskDetails from './pages/tester/TaskDetails';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import AdminTasks from './pages/admin/AdminTasks';
 import Verification from './pages/admin/Verification';
-import Analytics from './pages/admin/Analytics';
+import UserRequests from './pages/admin/UserRequests';
+import UserRequestDetails from './pages/admin/UserRequestDetails';
 
 function App() {
     return (
@@ -64,6 +66,7 @@ function App() {
                     <Route path="/tester" element={<DashboardLayout />}>
                         <Route path="dashboard" element={<TesterDashboard />} />
                         <Route path="marketplace" element={<Marketplace />} />
+                        <Route path="task/:taskId" element={<TaskDetails />} />
                         <Route path="my-tasks" element={<MyTasks />} />
                         <Route path="submit-proof" element={<MyTasks />} />
                         <Route path="submit/:taskId" element={<SubmitFeedback />} />
@@ -74,13 +77,14 @@ function App() {
 
                     {/* Admin Routes */}
                     <Route path="/admin" element={<DashboardLayout />}>
+                        <Route index element={<Navigate to="dashboard" replace />} />
+                        <Route path="requests" element={<UserRequests />} />
+                        <Route path="requests/:userId" element={<UserRequestDetails />} />
                         <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="users" element={<UserManagement />} />
                         <Route path="tasks" element={<AdminTasks />} />
                         <Route path="verification" element={<Verification />} />
                         <Route path="credits" element={<AdminDashboard />} />
-                        <Route path="analytics" element={<Analytics />} />
-                        <Route index element={<Navigate to="dashboard" replace />} />
                     </Route>
 
                     {/* Landing Page */}
