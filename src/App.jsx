@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/common/Toast';
 
+// Landing Page
+import LandingPage from './pages/LandingPage';
+
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
 import AuthLayout from './layouts/AuthLayout';
@@ -80,9 +83,11 @@ function App() {
                         <Route index element={<Navigate to="dashboard" replace />} />
                     </Route>
 
-                    {/* Default Redirect */}
-                    <Route path="/" element={<Navigate to="/login" replace />} />
-                    <Route path="*" element={<Navigate to="/login" replace />} />
+                    {/* Landing Page */}
+                    <Route path="/" element={<LandingPage />} />
+
+                    {/* Catch-all */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </ToastProvider>
         </AuthProvider>
