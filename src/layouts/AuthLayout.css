@@ -1,8 +1,14 @@
-
 .auth-split-layout {
     display: flex;
     min-height: 100vh;
     background: transparent;
+}
+
+@media (min-width: 1024px) {
+    .auth-split-layout {
+        height: 100vh;
+        overflow: hidden;
+    }
 }
 
 @media (max-width: 1024px) {
@@ -108,6 +114,10 @@
 @media (min-width: 1024px) {
     .auth-form-panel {
         max-width: 50vw;
+        overflow-y: auto;
+        align-items: flex-start;
+        padding-top: var(--space-12);
+        padding-bottom: var(--space-12);
     }
 }
 

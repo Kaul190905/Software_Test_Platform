@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { adminStats, adminUsers, adminCreditLogs } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { tasksAPI, usersAPI, transactionsAPI, analyticsAPI } from '../../services/api';
 import { formatCurrency, formatCredits, formatDate } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
+import Loader from '../../components/common/Loader';
 import { FiUsers, FiDollarSign, FiActivity, FiAlertTriangle, FiArrowUpRight, FiTrendingUp, FiTrendingDown, FiZap } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
@@ -12,19 +13,22 @@ function AdminDashboard() {
     const [dashStats, setDashStats] = useState(null);
     const [users, setUsers] = useState([]);
     const [creditLogs, setCreditLogs] = useState([]);
+    const [analyticsData, setAnalyticsData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [statsRes, usersRes, txRes] = await Promise.all([
+                const [statsRes, usersRes, txRes, analyticsRes] = await Promise.all([
                     tasksAPI.getStats(),
                     usersAPI.list(),
                     transactionsAPI.list(),
+                    analyticsAPI.overview().catch(() => null),
                 ]);
                 setDashStats(statsRes);
                 setUsers(usersRes.users || []);
                 setCreditLogs(txRes.transactions || []);
+                setAnalyticsData(analyticsRes);
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
             } finally {
@@ -34,12 +38,12 @@ function AdminDashboard() {
         fetchData();
     }, []);
 
-    if (loading || !dashStats) return <div className="loading">Loading...</div>;
+    if (loading || !dashStats) return <Loader />;
 
     const stats = [
         {
             label: 'Total Users',
-            value: adminStats.totalUsers,
+            value: dashStats.totalUsers || 0,
             icon: FiUsers,
             iconClass: 'primary',
             change: dashStats.usersChange || 0,
@@ -47,7 +51,7 @@ function AdminDashboard() {
         },
         {
             label: 'Total Developers',
-            value: adminStats.totalDevelopers,
+            value: dashStats.totalDevelopers || 0,
             icon: FiUsers,
             iconClass: 'primary',
         },
@@ -67,7 +71,7 @@ function AdminDashboard() {
         },
         {
             label: 'Disputes Pending',
-            value: adminStats.disputesPending,
+            value: dashStats.disputesPending || 0,
             icon: FiAlertTriangle,
             iconClass: 'warning',
         },
@@ -114,6 +118,14 @@ function AdminDashboard() {
                     'rgba(139, 92, 246, 0.8)',
                 ],
             },
+        ],
+    };
+
+    const tasksOverTimeData = analyticsData?.tasksOverTime || {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+            { label: 'Tasks Created', data: [45, 52, 68, 74, 82, 89], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)' },
+            { label: 'Tasks Completed', data: [38, 45, 58, 65, 72, 78], borderColor: '#14b8a6', backgroundColor: 'rgba(20, 184, 166, 0.1)' },
         ],
     };
 
@@ -213,7 +225,7 @@ function AdminDashboard() {
                                         <tr key={user._id || user.id}>
                                             <td>
                                                 <div className="user-cell">
-                                                    <div className="avatar sm">{user.name.split(' ').map(n => n[0]).join('')}</div>
+                                                    <div className="avatar sm">{user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}</div>
                                                     <div>
                                                         <p className="user-name">{user.name}</p>
                                                         <p className="user-email">{user.email}</p>
@@ -245,7 +257,7 @@ function AdminDashboard() {
                             </Link>
                         </div>
                         <div className="credit-activity">
-                            {creditLogs.slice(0, 5).map(log => (
+                            {creditLogs.length > 0 ? creditLogs.slice(0, 5).map(log => (
                                 <div key={log._id || log.id} className="credit-log-item">
                                     <div className="log-info">
                                         <p className="log-description">{log.description}</p>
@@ -255,7 +267,9 @@ function AdminDashboard() {
                                         {log.type === 'credit' ? '+' : '-'}{formatCredits(log.amount)}
                                     </span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p style={{ padding: '1rem', opacity: 0.6 }}>No transactions yet.</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -266,7 +280,7 @@ function AdminDashboard() {
                         <div className="card-header">
                             <h3 className="card-title">Tasks & Completion Overview</h3>
                         </div>
-                        <Chart type="line" data={analyticsData.tasksOverTime} height={300} />
+                        <Chart type="line" data={tasksOverTimeData} height={300} />
                     </div>
                 </div>
 

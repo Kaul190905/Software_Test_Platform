@@ -206,9 +206,9 @@ function SubmitFeedback() {
                             </div>
 
                             <FileUpload
-                                onFilesChange={handleFilesChange}
+                                onChange={handleFilesChange}
                                 accept={formData.proofType === 'video' ? 'video/*' : 'image/*'}
-                                maxSize={formData.proofType === 'video' ? 100 : 10}
+                                maxSize={formData.proofType === 'video' ? 200 * 1024 * 1024 : 25 * 1024 * 1024}
                                 multiple={formData.proofType === 'screenshot'}
                                 label={formData.proofType === 'video'
                                     ? 'Drag & drop your video or click to upload'

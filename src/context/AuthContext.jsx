@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import supabase from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
@@ -8,62 +8,122 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // On mount, check for existing session via stored token
-    useEffect(() => {
-        // Check for existing session
-        const storedUser = localStorage.getItem('testflow_user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                setIsAuthenticated(true);
-            } catch (e) {
-                localStorage.removeItem('testflow_user');
-            }
+    // Fetch profile data from profiles table
+    const fetchProfile = async (authUser) => {
+        if (!authUser) return null;
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+
+        if (error) {
+            console.error('Error fetching profile:', error.message);
+            return null;
         }
-        setIsLoading(false);
+        return data;
+    };
+
+    // On mount, check for existing Supabase session
+    useEffect(() => {
+        const initAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    const profile = await fetchProfile(session.user);
+                    if (profile) {
+                        setUser(profile);
+                        setIsAuthenticated(true);
+                    }
+                }
+            } catch (e) {
+                console.error('Auth init error:', e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        initAuth();
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    const profile = await fetchProfile(session.user);
+                    if (profile) {
+                        setUser(profile);
+                        setIsAuthenticated(true);
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const login = async (email, password) => {
         setIsLoading(true);
         try {
-            const data = await authAPI.login(email, password);
-            const { user: userData, token } = data;
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-            localStorage.setItem('testflow_token', token);
-            localStorage.setItem('testflow_user', JSON.stringify(userData));
-            setUser(userData);
+            if (error) throw new Error(error.message);
+
+            const profile = await fetchProfile(data.user);
+            if (!profile) throw new Error('Profile not found');
+
+            if (profile.status === 'suspended') {
+                await supabase.auth.signOut();
+                throw new Error('Account suspended');
+            }
+
+            setUser(profile);
             setIsAuthenticated(true);
             setIsLoading(false);
-
-            return userData;
+            return profile;
         } catch (err) {
             setIsLoading(false);
             throw err;
         }
-
-        const userWithEmail = { ...userData, email };
-        setUser(userWithEmail);
-        setIsAuthenticated(true);
-        localStorage.setItem('testflow_user', JSON.stringify(userWithEmail));
-        setIsLoading(false);
-
-        return userWithEmail;
     };
 
     const signup = async (userData) => {
         setIsLoading(true);
         try {
-            const data = await authAPI.register(userData);
-            const { user: newUser, token } = data;
+            const { data, error } = await supabase.auth.signUp({
+                email: userData.email,
+                password: userData.password,
+                options: {
+                    data: {
+                        name: userData.name,
+                        role: userData.role || 'developer',
+                        company: userData.company || '',
+                    },
+                },
+            });
 
-            // Store token so OTP verify call works
-            localStorage.setItem('testflow_token', token);
-            localStorage.setItem('testflow_user', JSON.stringify(newUser));
-            setUser(newUser);
+            if (error) throw new Error(error.message);
+
+            // Wait a moment for the trigger to create the profile
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const profile = await fetchProfile(data.user);
+            if (profile) {
+                // Update profile with company if provided
+                if (userData.company) {
+                    await supabase.from('profiles').update({ company: userData.company }).eq('id', data.user.id);
+                    profile.company = userData.company;
+                }
+                setUser(profile);
+            }
+
             setIsLoading(false);
-
-            return newUser;
+            return profile || { ...data.user, role: userData.role };
         } catch (err) {
             setIsLoading(false);
             throw err;
@@ -73,15 +133,24 @@ export function AuthProvider({ children }) {
     const verifyOTP = async (otp) => {
         setIsLoading(true);
         try {
-            const data = await authAPI.verifyOTP(otp);
-            const verifiedUser = data.user;
+            // For now, any 6-digit code works (mock OTP)
+            if (!otp || otp.length !== 6) {
+                throw new Error('Invalid OTP. Must be 6 digits.');
+            }
 
-            // Update stored user with verified status
-            localStorage.setItem('testflow_user', JSON.stringify(verifiedUser));
-            setUser(verifiedUser);
-            setIsAuthenticated(true);
+            // Mark user as verified
+            if (user) {
+                await supabase
+                    .from('profiles')
+                    .update({ otp_verified: true, status: 'active' })
+                    .eq('id', user.id);
+
+                const updatedUser = { ...user, otp_verified: true, status: 'active' };
+                setUser(updatedUser);
+                setIsAuthenticated(true);
+            }
+
             setIsLoading(false);
-
             return true;
         } catch (err) {
             setIsLoading(false);
@@ -89,10 +158,10 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('testflow_user');
     };
 
     const updateUser = (updates) => {

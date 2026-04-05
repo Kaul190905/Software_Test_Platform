@@ -25,7 +25,6 @@ function Signup() {
     const roles = [
         { id: 'developer', label: 'Developer', icon: FiCode, description: 'Post testing tasks' },
         { id: 'tester', label: 'Tester', icon: FiTarget, description: 'Complete tests, earn credits' },
-        { id: 'admin', label: 'Admin', icon: FiShield, description: 'Manage platform' },
     ];
 
     const passwordStrength = getPasswordStrength(formData.password);
@@ -95,12 +94,12 @@ function Signup() {
 
     return (
         <div className="auth-form">
-            <div className="auth-mobile-logo">
+            <Link to="/" className="auth-mobile-logo">
                 <div className="auth-logo-icon">
                     <FiZap size={24} />
                 </div>
                 <span className="auth-logo-text">TestFlow</span>
-            </div>
+            </Link>
 
             <div className="auth-form-header">
                 <h2>Create your account</h2>
@@ -140,7 +139,7 @@ function Signup() {
                             id="name"
                             name="name"
                             className={`form-input ${errors.name ? 'error' : ''}`}
-                            placeholder="John Doe"
+                            placeholder="Anbarasan"
                             value={formData.name}
                             onChange={handleChange}
                         />

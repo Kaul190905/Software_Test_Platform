@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { adminUsers } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usersAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Modal from '../../components/common/Modal';
+import Loader from '../../components/common/Loader';
 import { useToast } from '../../components/common/Toast';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX, FiUsers } from 'react-icons/fi';
+import { FiSearch, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX, FiUsers } from 'react-icons/fi';
 import './UserManagement.css';
 
 function UserManagement() {
@@ -13,6 +15,7 @@ function UserManagement() {
     const toast = useToast();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [pendingCount, setPendingCount] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -25,6 +28,8 @@ function UserManagement() {
             try {
                 const res = await usersAPI.list();
                 setUsers(res.users || []);
+                const pending = (res.users || []).filter(u => u.status === 'pending');
+                setPendingCount(pending.length);
             } catch (err) {
                 console.error('Failed to load users:', err);
             } finally {
@@ -33,6 +38,8 @@ function UserManagement() {
         }
         fetchUsers();
     }, []);
+
+    if (loading) return <Loader />;
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,6 +54,7 @@ function UserManagement() {
             active: { label: 'Active', variant: 'success' },
             inactive: { label: 'Inactive', variant: 'secondary' },
             suspended: { label: 'Suspended', variant: 'danger' },
+            pending: { label: 'Pending', variant: 'warning' },
         };
         const config = statusMap[status] || { label: status, variant: 'secondary' };
         return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -75,10 +83,15 @@ function UserManagement() {
         }
     };
 
-    const handleDelete = (userId) => {
-        setUsers(prev => prev.filter(u => u.id !== userId));
-        toast.success('User Removed', 'User has been removed from the platform');
-        setShowDropdown(null);
+    const handleDelete = async (userId) => {
+        try {
+            await usersAPI.update(userId, { status: 'inactive' });
+            setUsers(prev => prev.filter(u => (u._id || u.id) !== userId));
+            toast.success('User Removed', 'User has been removed from the platform');
+            setShowDropdown(null);
+        } catch (err) {
+            toast.error('Error', err.message);
+        }
     };
 
     const openEditModal = (user) => {
@@ -99,7 +112,7 @@ function UserManagement() {
                     icon={<FiUsers />}
                     onClick={() => navigate('/admin/requests')}
                 >
-                    User Request {pendingUsers.length > 0 && <span className="btn-badge">{pendingUsers.length}</span>}
+                    User Requests {pendingCount > 0 && <span className="btn-badge">{pendingCount}</span>}
                 </Button>
             </div>
 
@@ -134,6 +147,7 @@ function UserManagement() {
                 >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
+                    <option value="pending">Pending</option>
                     <option value="inactive">Inactive</option>
                     <option value="suspended">Suspended</option>
                 </select>
@@ -179,7 +193,7 @@ function UserManagement() {
                                 <tr key={user._id || user.id}>
                                     <td>
                                         <div className="user-cell">
-                                            <div className="avatar">{user.name.split(' ').map(n => n[0]).join('')}</div>
+                                            <div className="avatar">{user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}</div>
                                             <div>
                                                 <p className="user-name">{user.name}</p>
                                                 <p className="user-email">{user.email}</p>
@@ -195,25 +209,25 @@ function UserManagement() {
                                         <div className="actions-cell">
                                             <button
                                                 className="action-btn"
-                                                onClick={() => setShowDropdown(showDropdown === user.id ? null : user.id)}
+                                                onClick={() => setShowDropdown(showDropdown === (user._id || user.id) ? null : (user._id || user.id))}
                                             >
                                                 <FiMoreVertical size={18} />
                                             </button>
-                                            {showDropdown === user.id && (
+                                            {showDropdown === (user._id || user.id) && (
                                                 <div className="actions-dropdown">
                                                     <button onClick={() => openEditModal(user)}>
                                                         <FiEdit2 size={14} /> Edit User
                                                     </button>
                                                     {user.status === 'active' ? (
-                                                        <button onClick={() => handleStatusChange(user.id, 'suspended')}>
+                                                        <button onClick={() => handleStatusChange(user._id || user.id, 'suspended')}>
                                                             <FiX size={14} /> Suspend
                                                         </button>
                                                     ) : (
-                                                        <button onClick={() => handleStatusChange(user.id, 'active')}>
+                                                        <button onClick={() => handleStatusChange(user._id || user.id, 'active')}>
                                                             <FiCheck size={14} /> Activate
                                                         </button>
                                                     )}
-                                                    <button className="danger" onClick={() => handleDelete(user.id)}>
+                                                    <button className="danger" onClick={() => handleDelete(user._id || user.id)}>
                                                         <FiTrash2 size={14} /> Delete
                                                     </button>
                                                 </div>
@@ -269,6 +283,7 @@ function UserManagement() {
                             <label className="form-label">Status</label>
                             <select className="form-input" defaultValue={selectedUser.status}>
                                 <option value="active">Active</option>
+                                <option value="pending">Pending</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="suspended">Suspended</option>
                             </select>

@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { availableTasks } from '../../data/mockData';
+import { tasksAPI } from '../../services/api';
 import { formatCredits, formatDate, getDeadlineStatus } from '../../utils/helpers';
 import Button from '../../components/common/Button';
+import Loader from '../../components/common/Loader';
 import { useToast } from '../../components/common/Toast';
 import Badge from '../../components/common/Badge';
 import { FiCalendar, FiClock, FiCheckCircle, FiInfo, FiArrowLeft } from 'react-icons/fi';
@@ -10,9 +12,26 @@ import './TaskDetails.css';
 function TaskDetails() {
     const { taskId } = useParams();
     const navigate = useNavigate();
-    
-    // Find the task from mock data
-    const task = availableTasks.find(t => t.id === taskId);
+    const toast = useToast();
+    const [task, setTask] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [applying, setApplying] = useState(false);
+
+    useEffect(() => {
+        async function fetchTask() {
+            try {
+                const res = await tasksAPI.get(taskId);
+                setTask(res.task);
+            } catch (err) {
+                console.error('Failed to load task:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        if (taskId) fetchTask();
+    }, [taskId]);
+
+    if (loading) return <Loader />;
 
     if (!task) {
         return (
@@ -29,18 +48,23 @@ function TaskDetails() {
     }
 
     const deadline = getDeadlineStatus(task.deadline);
-    const toast = useToast();
 
-    const handleAcceptTask = () => {
-        // In a real app, this would call an API
-        // For now, we'll just simulate success and navigate
-        toast.success(
-            'Task Accepted!', 
-            `You have successfully accepted "${task.appName}". Good luck!`
-        );
-        setTimeout(() => {
-            navigate('/tester/my-tasks');
-        }, 500);
+    const handleAcceptTask = async () => {
+        setApplying(true);
+        try {
+            await tasksAPI.apply(task.id || task._id);
+            toast.success(
+                'Task Accepted!',
+                `You have successfully accepted "${task.appName}". Good luck!`
+            );
+            setTimeout(() => {
+                navigate('/tester/my-tasks');
+            }, 500);
+        } catch (err) {
+            toast.error('Error', err.message || 'Failed to accept task');
+        } finally {
+            setApplying(false);
+        }
     };
 
     return (
@@ -52,18 +76,18 @@ function TaskDetails() {
 
             <div className="task-details-header">
                 <div className="header-main">
-                    <Badge variant="primary" size="lg">{task.level}</Badge>
+                    <Badge variant="primary" size="lg">{task.level || task.testingLevel}</Badge>
                     <h1 className="task-title">{task.appName}</h1>
-                    <p className="company-name">by {task.companyName}</p>
+                    <p className="company-name">by {task.companyName || task.company || 'Unknown'}</p>
                 </div>
                 <div className="header-stats">
                     <div className="stat-item">
-                        <span className="stat-value">{formatCredits(task.credits)}</span>
+                        <span className="stat-value">{formatCredits(task.credits || task.budget)}</span>
                         <span className="stat-label">Credits</span>
                     </div>
                     <div className="stat-divider"></div>
                     <div className="stat-item">
-                        <span className="stat-value">{task.openSlots}</span>
+                        <span className="stat-value">{task.openSlots ?? 0}</span>
                         <span className="stat-label">Spots Left</span>
                     </div>
                 </div>
@@ -79,7 +103,7 @@ function TaskDetails() {
                     <section className="details-section">
                         <h2 className="section-title">What to Test</h2>
                         <div className="test-types-list">
-                            {task.testTypes.map(type => (
+                            {(task.testTypes || []).map(type => (
                                 <div key={type} className="test-type-item">
                                     <FiCheckCircle className="check-icon" />
                                     <span>{type} Testing</span>
@@ -114,7 +138,7 @@ function TaskDetails() {
                             <FiClock className="info-icon" />
                             <div className="info-content">
                                 <span className="info-label">Estimated Time</span>
-                                <span className="info-value">{task.estimatedTime}</span>
+                                <span className="info-value">{task.estimatedTime || 'TBD'}</span>
                             </div>
                         </div>
                         <div className="info-row">
@@ -131,11 +155,12 @@ function TaskDetails() {
                     <div className="acceptance-card">
                         <h3>Ready to start?</h3>
                         <p>By accepting this task, you agree to complete it before the deadline and follow the testing requirements.</p>
-                        <Button 
-                            variant="primary" 
-                            fullWidth 
+                        <Button
+                            variant="primary"
+                            fullWidth
                             size="lg"
                             onClick={handleAcceptTask}
+                            loading={applying}
                         >
                             Accept & Start Testing
                         </Button>

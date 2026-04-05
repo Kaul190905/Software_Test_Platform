@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
+import { tasksAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
 import { FiCreditCard, FiShield, FiCheck, FiArrowLeft, FiSmartphone, FiHome } from 'react-icons/fi';
 import './Payment.css';
@@ -45,14 +46,34 @@ function Payment() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setIsProcessing(true);
 
-        // Simulate payment processing and task creation
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        try {
+            // Simulate payment processing
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-        toast.success('Payment Successful & Task Created!', `Your task "${task.appName || 'New Task'}" is now live and ${formatCurrency(amount)} has been sent to admin.`);
-        navigate('/developer/dashboard');
+            // Actually create the task in Supabase
+            await tasksAPI.create({
+                appName: task.appName,
+                appUrl: task.appUrl,
+                description: task.description,
+                testingLevel: task.testingLevel,
+                testTypes: task.selectedTestTypes || [],
+                budget: task.budget,
+                credits: task.budget,
+                deadline: task.deadline,
+                requiredTesters: task.requiredTesters || 3,
+            });
+
+            toast.success('Payment Successful & Task Created!', `Your task "${task.appName || 'New Task'}" is now live.`);
+            navigate('/developer/dashboard');
+        } catch (err) {
+            console.error('Task creation failed:', err);
+            toast.error('Task Creation Failed', err.message || 'Something went wrong. Please try again.');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -162,7 +183,7 @@ function Payment() {
                                     type="text"
                                     name="name"
                                     className="form-input"
-                                    placeholder="John Doe"
+                                    placeholder="Anbarasan"
                                     value={cardData.name}
                                     onChange={handleCardChange}
                                     required

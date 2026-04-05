@@ -62,12 +62,12 @@ function Login() {
 
     return (
         <div className="auth-form">
-            <div className="auth-mobile-logo">
+            <Link to="/" className="auth-mobile-logo">
                 <div className="auth-logo-icon">
                     <FiZap size={24} />
                 </div>
                 <span className="auth-logo-text">TestFlow</span>
-            </div>
+            </Link>
 
             <div className="auth-form-header">
                 <h2>Welcome back</h2>

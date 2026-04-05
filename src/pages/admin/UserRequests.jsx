@@ -1,15 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pendingUsers } from '../../data/mockData';
+import { usersAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import Loader from '../../components/common/Loader';
 import { FiArrowLeft, FiUser, FiCalendar, FiChevronRight } from 'react-icons/fi';
 import './UserRequests.css';
 
 function UserRequests() {
     const navigate = useNavigate();
-    const [requests] = useState(pendingUsers);
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchPendingUsers() {
+            try {
+                const res = await usersAPI.list({ status: 'pending' });
+                setRequests((res.users || []).filter(u => u.status === 'pending'));
+            } catch (err) {
+                console.error('Failed to load pending users:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchPendingUsers();
+    }, []);
+
+    if (loading) return <Loader />;
 
     return (
         <div className="user-requests-page">
@@ -29,11 +47,11 @@ function UserRequests() {
                 {requests.length > 0 ? (
                     <div className="requests-grid">
                         {requests.map(user => (
-                            <div key={user.id} className="request-card" onClick={() => navigate(`/admin/requests/${user.id}`)}>
+                            <div key={user._id || user.id} className="request-card" onClick={() => navigate(`/admin/requests/${user._id || user.id}`)}>
                                 <div className="request-card-header">
                                     <div className="request-user-info">
                                         <div className="avatar">
-                                            {user.name.split(' ').map(n => n[0]).join('')}
+                                            {user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}
                                         </div>
                                         <div>
                                             <h3 className="request-user-name">{user.name}</h3>
@@ -49,10 +67,10 @@ function UserRequests() {
                                     <div className="request-meta">
                                         <div className="meta-item">
                                             <FiCalendar size={14} />
-                                            <span>Joined: {formatDate(user.joinedAt)}</span>
+                                            <span>Joined: {formatDate(user.joinedAt || user.createdAt)}</span>
                                         </div>
                                     </div>
-                                    <p className="request-bio">{user.bio}</p>
+                                    <p className="request-bio">{user.bio || 'No bio provided.'}</p>
                                 </div>
 
                                 <div className="request-card-footer">

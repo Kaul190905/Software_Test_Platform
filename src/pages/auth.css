@@ -157,7 +157,140 @@
     text-align: center;
 }
 
+/* Role Selector (Signup) */
+.role-selector {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.role-option {
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+}
+
+.role-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.role-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4) var(--space-2);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+    gap: var(--space-2);
+    height: 100%;
+}
+
+.role-option input:checked + .role-card {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-500);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+.role-card:hover {
+    border-color: var(--primary-400);
+    background: var(--bg-card-hover);
+}
+
+.role-icon {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-normal);
+}
+
+.role-option input:checked + .role-card .role-icon {
+    color: var(--primary-500);
+}
+
+.role-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+/* Role Tabs (Login) */
+.role-tabs {
+    display: flex;
+    background: var(--bg-tertiary);
+    padding: var(--space-1);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-primary);
+    margin-bottom: var(--space-4);
+}
+
+.role-tab {
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+}
+
+.role-tab input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.role-tab-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+}
+
+.role-tab input:checked + .role-tab-content {
+    background: var(--primary-500);
+    color: white;
+}
+
+.role-tab-icon {
+    font-size: 1.1rem;
+}
+
+/* Auth Form Footer */
+.auth-form-footer {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--glass-border);
+    text-align: center;
+}
+
+.auth-form-footer p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.auth-form-footer a {
+    color: var(--primary-400);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.auth-form-footer a:hover {
+    color: var(--primary-300);
+}
+
 /* Form Checkbox Error State */
 .form-checkbox.error span {
     color: var(--error-400);
-}
+}

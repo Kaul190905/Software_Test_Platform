@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { pendingUsers } from '../../data/mockData';
+import { usersAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
+import Loader from '../../components/common/Loader';
 import { useToast } from '../../components/common/Toast';
 import { FiArrowLeft, FiMail, FiCalendar, FiBriefcase, FiAward, FiCheck, FiX } from 'react-icons/fi';
 import './UserRequestDetails.css';
@@ -13,35 +14,67 @@ function UserRequestDetails() {
     const navigate = useNavigate();
     const toast = useToast();
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        const foundUser = pendingUsers.find(u => u.id === userId);
-        if (foundUser) {
-            setUser(foundUser);
-        } else {
-            navigate('/admin/requests');
+        async function fetchUser() {
+            try {
+                const res = await usersAPI.get(userId);
+                if (res.user) {
+                    setUser({
+                        ...res.user,
+                        id: res.user.id || res.user._id,
+                        name: res.user.name || '',
+                        email: res.user.email || '',
+                        role: res.user.role || 'developer',
+                        status: res.user.status || 'pending',
+                        bio: res.user.bio || '',
+                        experience: res.user.experience || '',
+                        company: res.user.company || '',
+                        skills: res.user.skills || [],
+                        joinedAt: res.user.created_at || res.user.joinedAt,
+                    });
+                } else {
+                    navigate('/admin/requests');
+                }
+            } catch (err) {
+                console.error('Failed to load user:', err);
+                navigate('/admin/requests');
+            } finally {
+                setLoading(false);
+            }
         }
+        fetchUser();
     }, [userId, navigate]);
 
-    const handleAccept = () => {
+    const handleAccept = async () => {
         setIsProcessing(true);
-        // Simulate API call and email sending
-        setTimeout(() => {
+        try {
+            await usersAPI.update(user.id, { status: 'active' });
             toast.success(
-                'User Approved', 
+                'User Approved',
                 `An enrollment email has been sent to ${user.email}.`
             );
             setIsProcessing(false);
             navigate('/admin/requests');
-        }, 1500);
+        } catch (err) {
+            toast.error('Error', err.message);
+            setIsProcessing(false);
+        }
     };
 
-    const handleReject = () => {
-        toast.error('Application Rejected', `The request from ${user.name} has been declined.`);
-        navigate('/admin/requests');
+    const handleReject = async () => {
+        try {
+            await usersAPI.update(user.id, { status: 'inactive' });
+            toast.error('Application Rejected', `The request from ${user.name} has been declined.`);
+            navigate('/admin/requests');
+        } catch (err) {
+            toast.error('Error', err.message);
+        }
     };
 
+    if (loading) return <Loader />;
     if (!user) return null;
 
     return (
@@ -64,7 +97,7 @@ function UserRequestDetails() {
                     <div className="profile-header-card card">
                         <div className="profile-main-info">
                             <div className="avatar xl">
-                                {user.name.split(' ').map(n => n[0]).join('')}
+                                {user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}
                             </div>
                             <div className="profile-text">
                                 <h2 className="profile-name">{user.name}</h2>
@@ -112,7 +145,7 @@ function UserRequestDetails() {
                                 )}
                                 <div className="info-item">
                                     <p className="info-label">Biography</p>
-                                    <p className="info-value bio-text">{user.bio}</p>
+                                    <p className="info-value bio-text">{user.bio || 'No biography provided.'}</p>
                                 </div>
                             </div>
                         </div>
@@ -131,17 +164,17 @@ function UserRequestDetails() {
                         )}
 
                         <div className="approval-actions">
-                            <Button 
-                                variant="secondary" 
-                                icon={<FiX />} 
+                            <Button
+                                variant="secondary"
+                                icon={<FiX />}
                                 onClick={handleReject}
                                 disabled={isProcessing}
                             >
                                 Reject Application
                             </Button>
-                            <Button 
-                                variant="primary" 
-                                icon={<FiCheck />} 
+                            <Button
+                                variant="primary"
+                                icon={<FiCheck />}
                                 onClick={handleAccept}
                                 isLoading={isProcessing}
                             >

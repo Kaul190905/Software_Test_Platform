@@ -127,22 +127,22 @@ const SERVICES = [
 
 const TESTIMONIALS = [
     {
-        name: 'Akash Mehta',
+        name: 'Kadhirvel',
         role: 'Full-Stack Developer',
         text: 'TestFlow helped us catch 40+ critical bugs before launch. The tester marketplace is a game-changer for indie developers like me.',
-        avatar: 'AM',
+        avatar: 'KV',
     },
     {
-        name: 'Priya Sharma',
+        name: 'Elavarasi',
         role: 'QA Lead',
         text: 'As a tester, I love the flexibility. I pick tasks that match my expertise, submit thorough reports, and get paid fairly. Excellent platform!',
-        avatar: 'PS',
+        avatar: 'EV',
     },
     {
-        name: 'Rahul Kapoor',
+        name: 'Gunasekaran',
         role: 'Startup Founder',
         text: 'We reduced our QA costs by 60% while improving coverage. TestFlow\'s structured feedback system is incredibly efficient.',
-        avatar: 'RK',
+        avatar: 'GS',
     },
 ];
 
@@ -294,7 +294,7 @@ export default function LandingPage() {
                         </div>
                         <div>
                             <div className="hero-card-label">Bug Report Approved</div>
-                            <div className="hero-card-value">+$25.00 earned</div>
+                            <div className="hero-card-value">+₹2,000 earned</div>
                         </div>
                     </div>
                     <div className="landing-hero-card card-3">
@@ -513,7 +513,7 @@ export default function LandingPage() {
                                 <div>
                                     <h4>Visit Us</h4>
                                     <p>ProEduvate Technologies</p>
-                                    <p>Bangalore, Karnataka, India</p>
+                                    <p>Chennai, Tamil Nadu, India</p>
                                 </div>
                             </div>
                         </div>
@@ -524,7 +524,7 @@ export default function LandingPage() {
                                 <input
                                     type="text"
                                     id="contact-name"
-                                    placeholder="John Doe"
+                                    placeholder="Anbarasan"
                                     value={contactForm.name}
                                     onChange={e => setContactForm(p => ({ ...p, name: e.target.value }))}
                                     required

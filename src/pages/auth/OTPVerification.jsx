@@ -7,7 +7,7 @@ import '../auth.css';
 
 function OTPVerification() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user, verifyOTP, isAuthenticated } = useAuth();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +74,6 @@ function OTPVerification() {
         setOtp(['', '', '', '', '', '']);
         setError('');
         inputRefs.current[0]?.focus();
-        // In real app, would call resend OTP API
     };
 
     const handleSubmit = async (e) => {
@@ -88,13 +87,10 @@ function OTPVerification() {
 
         setIsLoading(true);
         try {
-            // Mock verification - any 6-digit code works
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Log user in after verification
-            await login(signupData.email, signupData.password, signupData.role);
+            await verifyOTP(otpValue);
+            const role = user?.role || signupData.role || 'developer';
             sessionStorage.removeItem('signupData');
-            navigate(`/${signupData.role}/dashboard`);
+            navigate(`/${role}/dashboard`);
         } catch (error) {
             setError('Invalid OTP. Please try again.');
         } finally {
@@ -126,7 +122,7 @@ function OTPVerification() {
                 <h2>Verify your email</h2>
                 <p>
                     We've sent a 6-digit code to<br />
-                    <strong>{signupData.email || 'your email'}</strong>
+                    <strong>{signupData.email || user?.email || 'your email'}</strong>
                 </p>
             </div>
 
