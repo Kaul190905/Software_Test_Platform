@@ -73,7 +73,7 @@ export const tasksAPI = {
         if (taskIds.length > 0) {
             const { data: td } = await supabase
                 .from('task_testers')
-                .select('task_id, tester_id, profiles(name, email, rating)')
+                .select('task_id, tester_id, profiles(name, email)')
                 .in('task_id', taskIds);
             testerData = td || [];
         }
@@ -451,7 +451,7 @@ export const feedbackAPI = {
             taskName: fb.task_name,
             tester: fb.tester_id,
             testerName: fb.tester_name,
-            testerRating: fb.tester_rating,
+            testerRating: fb.tester_rating || 5.0,
             proofType: fb.proof_type,
             proofUrl: fb.proof_url,
             observations: fb.observations,
@@ -472,7 +472,7 @@ export const feedbackAPI = {
 
         const { data: profile } = await supabase
             .from('profiles')
-            .select('name, rating')
+            .select('name')
             .eq('id', user.id)
             .single();
 
@@ -488,14 +488,13 @@ export const feedbackAPI = {
             .from('feedback')
             .insert({
                 task_id: taskId,
-                task_name: task?.app_name || '',
                 tester_id: user.id,
-                tester_name: profile?.name || '',
-                tester_rating: profile?.rating || 0,
-                proof_type: feedbackData.proofType || 'screenshots',
-                proof_url: feedbackData.proofUrl || '',
                 observations: feedbackData.observations,
+                proof_type: feedbackData.proofType || 'screenshot',
+                proof_url: feedbackData.proofUrl || '',
                 test_result: feedbackData.testResult || 'pass',
+                // Optional columns that might not exist in early schema
+                ...(profile?.name ? { tester_name: profile.name } : {}),
                 ai_verification: 'pending',
                 credit_score: Math.floor(Math.random() * 40) + 60,
             })

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import supabase from '../lib/supabase';
 
 const AuthContext = createContext(null);
@@ -8,30 +8,40 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+    // Track whether login/signup is in progress to avoid onAuthStateChange races
+    const loginInProgressRef = useRef(false);
+
     // Fetch profile data from profiles table
     const fetchProfile = async (authUser) => {
         if (!authUser) return null;
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .single();
 
-        if (error) {
-            console.error('Error fetching profile:', error.message);
+            if (error) {
+                console.error('Error fetching profile:', error.message);
+                return null;
+            }
+            return data;
+        } catch (e) {
+            console.error('fetchProfile exception:', e);
             return null;
         }
-        return data;
     };
 
     // On mount, check for existing Supabase session
     useEffect(() => {
+        let isMounted = true;
+
         const initAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
+                if (session?.user && isMounted) {
                     const profile = await fetchProfile(session.user);
-                    if (profile) {
+                    if (profile && isMounted) {
                         setUser(profile);
                         setIsAuthenticated(true);
                     }
@@ -39,7 +49,9 @@ export function AuthProvider({ children }) {
             } catch (e) {
                 console.error('Auth init error:', e);
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
@@ -48,23 +60,36 @@ export function AuthProvider({ children }) {
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                if (event === 'SIGNED_IN' && session?.user) {
+                // Skip if login/signup is being handled directly
+                if (loginInProgressRef.current) return;
+
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
                     const profile = await fetchProfile(session.user);
-                    if (profile) {
+                    if (profile && isMounted) {
                         setUser(profile);
                         setIsAuthenticated(true);
                     }
+                    if (isMounted) setIsLoading(false);
                 } else if (event === 'SIGNED_OUT') {
-                    setUser(null);
-                    setIsAuthenticated(false);
+                    if (isMounted) {
+                        setUser(null);
+                        setIsAuthenticated(false);
+                        setIsLoading(false);
+                    }
+                } else if (event === 'TOKEN_REFRESHED') {
+                    // Token refreshed, no action needed
                 }
             }
         );
 
-        return () => subscription.unsubscribe();
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (email, password) => {
+        loginInProgressRef.current = true;
         setIsLoading(true);
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -75,7 +100,7 @@ export function AuthProvider({ children }) {
             if (error) throw new Error(error.message);
 
             const profile = await fetchProfile(data.user);
-            if (!profile) throw new Error('Profile not found');
+            if (!profile) throw new Error('Profile not found. Please contact support.');
 
             if (profile.status === 'suspended') {
                 await supabase.auth.signOut();
@@ -84,15 +109,17 @@ export function AuthProvider({ children }) {
 
             setUser(profile);
             setIsAuthenticated(true);
-            setIsLoading(false);
             return profile;
         } catch (err) {
-            setIsLoading(false);
             throw err;
+        } finally {
+            setIsLoading(false);
+            loginInProgressRef.current = false;
         }
     };
 
     const signup = async (userData) => {
+        loginInProgressRef.current = true;
         setIsLoading(true);
         try {
             const { data, error } = await supabase.auth.signUp({
@@ -110,7 +137,7 @@ export function AuthProvider({ children }) {
             if (error) throw new Error(error.message);
 
             // Wait a moment for the trigger to create the profile
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             const profile = await fetchProfile(data.user);
             if (profile) {
@@ -122,11 +149,12 @@ export function AuthProvider({ children }) {
                 setUser(profile);
             }
 
-            setIsLoading(false);
             return profile || { ...data.user, role: userData.role };
         } catch (err) {
-            setIsLoading(false);
             throw err;
+        } finally {
+            setIsLoading(false);
+            loginInProgressRef.current = false;
         }
     };
 
@@ -150,16 +178,20 @@ export function AuthProvider({ children }) {
                 setIsAuthenticated(true);
             }
 
-            setIsLoading(false);
             return true;
         } catch (err) {
-            setIsLoading(false);
             throw err;
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
+        try {
+            await supabase.auth.signOut();
+        } catch (e) {
+            console.error('Logout error:', e);
+        }
         setUser(null);
         setIsAuthenticated(false);
     };

@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { tasksAPI, feedbackAPI } from '../../services/api';
 import Button from '../../components/common/Button';
-import FileUpload from '../../components/common/FileUpload';
 import { useToast } from '../../components/common/Toast';
-import { FiArrowLeft, FiSend, FiCheckCircle, FiAlertCircle, FiMinusCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiSend, FiCheckCircle, FiAlertCircle, FiMinusCircle, FiLink } from 'react-icons/fi';
 import './SubmitFeedback.css';
 
 function SubmitFeedback() {
@@ -17,7 +16,7 @@ function SubmitFeedback() {
         observations: '',
         stepsToReproduce: '',
         proofType: 'screenshot',
-        proofFiles: [],
+        proofUrl: '',
     });
     const [errors, setErrors] = useState({});
     const [task, setTask] = useState({ appName: 'Loading...', testTypes: [], credits: 0 });
@@ -48,13 +47,6 @@ function SubmitFeedback() {
         }
     };
 
-    const handleFilesChange = (files) => {
-        setFormData(prev => ({ ...prev, proofFiles: files }));
-        if (errors.proofFiles) {
-            setErrors(prev => ({ ...prev, proofFiles: null }));
-        }
-    };
-
     const validate = () => {
         const newErrors = {};
 
@@ -68,8 +60,14 @@ function SubmitFeedback() {
             newErrors.stepsToReproduce = 'Steps to reproduce are required when reporting issues';
         }
 
-        if (formData.proofFiles.length === 0) {
-            newErrors.proofFiles = 'Please upload at least one proof file';
+        if (!formData.proofUrl.trim()) {
+            newErrors.proofUrl = 'Please provide a proof link';
+        } else {
+            try {
+                new URL(formData.proofUrl);
+            } catch {
+                newErrors.proofUrl = 'Please enter a valid URL (e.g. https://drive.google.com/...)';
+            }
         }
 
         setErrors(newErrors);
@@ -87,7 +85,7 @@ function SubmitFeedback() {
                 testResult: formData.testResult,
                 observations: formData.observations,
                 proofType: formData.proofType,
-                proofUrl: 'uploaded-proof',
+                proofUrl: formData.proofUrl,
             });
             toast.success('Feedback Submitted!', 'Your submission is now pending AI verification.');
             navigate('/tester/dashboard');
@@ -177,10 +175,10 @@ function SubmitFeedback() {
                             </div>
                         )}
 
-                        {/* Proof Upload */}
+                        {/* Proof Link */}
                         <div className="form-section">
                             <h3 className="section-title">Proof of Testing *</h3>
-                            <p className="section-description">Upload screenshots or video recordings of your testing session.</p>
+                            <p className="section-description">Provide a link to your screenshots or video recordings (Google Drive, Loom, Imgur, etc.)</p>
 
                             <div className="proof-type-selector">
                                 <label className={`proof-type-option ${formData.proofType === 'screenshot' ? 'selected' : ''}`}>
@@ -205,16 +203,25 @@ function SubmitFeedback() {
                                 </label>
                             </div>
 
-                            <FileUpload
-                                onChange={handleFilesChange}
-                                accept={formData.proofType === 'video' ? 'video/*' : 'image/*'}
-                                maxSize={formData.proofType === 'video' ? 200 * 1024 * 1024 : 25 * 1024 * 1024}
-                                multiple={formData.proofType === 'screenshot'}
-                                label={formData.proofType === 'video'
-                                    ? 'Drag & drop your video or click to upload'
-                                    : 'Drag & drop screenshots or click to upload'}
-                            />
-                            {errors.proofFiles && <p className="form-error">{errors.proofFiles}</p>}
+                            <div className="proof-link-input">
+                                <div className="input-with-icon">
+                                    <FiLink className="input-icon" size={18} />
+                                    <input
+                                        type="url"
+                                        name="proofUrl"
+                                        className={`form-input ${errors.proofUrl ? 'error' : ''}`}
+                                        placeholder={formData.proofType === 'video'
+                                            ? 'https://drive.google.com/... or https://www.loom.com/...'
+                                            : 'https://drive.google.com/... or https://imgur.com/...'}
+                                        value={formData.proofUrl}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <p className="proof-link-hint">
+                                    💡 Upload your {formData.proofType === 'video' ? 'screen recording' : 'screenshots'} to Google Drive, Dropbox, Imgur, or Loom and paste the shareable link here. Make sure the link is publicly accessible.
+                                </p>
+                            </div>
+                            {errors.proofUrl && <p className="form-error">{errors.proofUrl}</p>}
                         </div>
 
                         {/* Submit Button */}
