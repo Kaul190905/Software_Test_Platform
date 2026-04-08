@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
-import { tasksAPI } from '../../services/api';
+import { tasksAPI, transactionsAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
 import { FiCreditCard, FiShield, FiCheck, FiArrowLeft, FiSmartphone, FiHome } from 'react-icons/fi';
 import './Payment.css';
@@ -64,6 +64,15 @@ function Payment() {
                 credits: task.budget,
                 deadline: task.deadline,
                 requiredTesters: task.requiredTesters || 3,
+            });
+
+            // Record the payment transaction
+            await transactionsAPI.record({
+                type: 'payment',
+                amount: amount,
+                description: `Payment for task: ${task.appName}`,
+                taskName: task.appName,
+                status: 'completed'
             });
 
             toast.success('Payment Successful & Task Created!', `Your task "${task.appName || 'New Task'}" is now live.`);

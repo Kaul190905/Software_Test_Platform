@@ -38,7 +38,15 @@ export function AuthProvider({ children }) {
 
         const initAuth = async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                // 1. Try to get current session
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Auth getSession error:', error.message);
+                }
+
+                const session = data?.session;
+
                 if (session?.user && isMounted) {
                     const profile = await fetchProfile(session.user);
                     if (profile && isMounted) {
@@ -47,7 +55,7 @@ export function AuthProvider({ children }) {
                     }
                 }
             } catch (e) {
-                console.error('Auth init error:', e);
+                console.error('Auth init exception:', e);
             } finally {
                 if (isMounted) {
                     setIsLoading(false);
@@ -55,36 +63,52 @@ export function AuthProvider({ children }) {
             }
         };
 
-        initAuth();
-
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 // Skip if login/signup is being handled directly
                 if (loginInProgressRef.current) return;
 
-                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+                console.log('Auth state change:', event, !!session);
+
+                if (session?.user) {
                     const profile = await fetchProfile(session.user);
-                    if (profile && isMounted) {
-                        setUser(profile);
-                        setIsAuthenticated(true);
+                    if (isMounted) {
+                        if (profile) {
+                            setUser(profile);
+                            setIsAuthenticated(true);
+                        } else {
+                            // If profile fetch failed but session exists, 
+                            // we might still want to end loading
+                            console.warn('Session exists but profile fetch failed');
+                        }
+                        setIsLoading(false);
                     }
-                    if (isMounted) setIsLoading(false);
-                } else if (event === 'SIGNED_OUT') {
+                } else {
+                    // No session
                     if (isMounted) {
                         setUser(null);
                         setIsAuthenticated(false);
                         setIsLoading(false);
                     }
-                } else if (event === 'TOKEN_REFRESHED') {
-                    // Token refreshed, no action needed
                 }
             }
         );
 
+        initAuth();
+
+        // Safety timeout to ensure loading eventually stops
+        const safetyTimeout = setTimeout(() => {
+            if (isMounted && isLoading) {
+                console.warn('Auth initialization took too long, forcing loading to stop');
+                setIsLoading(false);
+            }
+        }, 5000);
+
         return () => {
             isMounted = false;
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
         };
     }, []);
 
@@ -158,28 +182,39 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const verifyOTP = async (otp) => {
+    const verifyOTP = async (otp, email) => {
         setIsLoading(true);
         try {
-            // For now, any 6-digit code works (mock OTP)
-            if (!otp || otp.length !== 6) {
-                throw new Error('Invalid OTP. Must be 6 digits.');
-            }
+            const targetEmail = email || user?.email;
+            if (!targetEmail) throw new Error('Email is required for verification');
 
-            // Mark user as verified
-            if (user) {
+            const { data, error } = await supabase.auth.verifyOtp({
+                email: targetEmail,
+                token: otp,
+                type: 'signup',
+            });
+
+            if (error) throw new Error(error.message);
+
+            // Update profile status after successful OTP verification
+            const profileId = data.user?.id || user?.id;
+            if (profileId) {
                 await supabase
                     .from('profiles')
                     .update({ otp_verified: true, status: 'active' })
-                    .eq('id', user.id);
+                    .eq('id', profileId);
 
-                const updatedUser = { ...user, otp_verified: true, status: 'active' };
-                setUser(updatedUser);
-                setIsAuthenticated(true);
+                // Fetch full profile to refresh state
+                const profile = await fetchProfile(data.user || user);
+                if (profile) {
+                    setUser(profile);
+                    setIsAuthenticated(true);
+                }
             }
 
             return true;
         } catch (err) {
+            console.error('OTP Verification Error:', err.message);
             throw err;
         } finally {
             setIsLoading(false);

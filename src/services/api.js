@@ -58,10 +58,14 @@ export const tasksAPI = {
             query = query.ilike('app_name', `%${params.search}%`);
         }
 
-        // If we need developer-only tasks, filter by developer_id
-        // The caller should pass developer_id when needed
-        if (params.developer_id) {
-            query = query.eq('developer_id', params.developer_id);
+        // Automatically filter by developer_id for developers to enforce privacy
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            const userRole = (profile?.role || '').toLowerCase();
+            if (userRole === 'developer') {
+                query = query.eq('developer_id', user.id);
+            }
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
@@ -122,10 +126,12 @@ export const tasksAPI = {
             .eq('id', user.id)
             .single();
 
-        if (profile?.role === 'developer') {
+        const userRole = (profile?.role || '').toLowerCase();
+
+        if (userRole === 'developer') {
             const { data: myTasks } = await supabase
                 .from('tasks')
-                .select('status, budget')
+                .select('id, status, budget')
                 .eq('developer_id', user.id);
 
             const tasks = myTasks || [];
@@ -133,15 +139,24 @@ export const tasksAPI = {
             const completed = tasks.filter(t => t.status === 'completed').length;
             const totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
 
+            let feedbackCount = 0;
+            if (tasks.length > 0) {
+                const { count } = await supabase
+                    .from('feedback')
+                    .select('*', { count: 'exact', head: true })
+                    .in('task_id', tasks.map(t => t.id));
+                feedbackCount = count || 0;
+            }
+
             return {
                 activeProjects: active,
                 completedProjects: completed,
                 totalBudgetSpent: totalBudget,
-                feedbackReceived: 0,
+                feedbackReceived: feedbackCount,
                 activeProjectsChange: 8.5,
                 completedProjectsChange: 12.3,
             };
-        } else if (profile?.role === 'tester') {
+        } else if (userRole === 'tester') {
             const { count: activeTests } = await supabase
                 .from('task_testers')
                 .select('*', { count: 'exact', head: true })
@@ -165,7 +180,11 @@ export const tasksAPI = {
             const { count: totalTesters } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'tester');
             const { count: activeTasks } = await supabase.from('tasks').select('*', { count: 'exact', head: true }).in('status', ['open', 'in-progress']);
             const { count: completedTasks } = await supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'completed');
-            const { count: pendingVerifications } = await supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'under-verification');
+            const { count: pendingVerifications } = await supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'pending-review');
+
+            // Total budget across all tasks
+            const { data: budgetData } = await supabase.from('tasks').select('budget');
+            const totalBudget = (budgetData || []).reduce((sum, t) => sum + (t.budget || 0), 0);
 
             return {
                 totalUsers: totalUsers || 0,
@@ -173,22 +192,32 @@ export const tasksAPI = {
                 totalTesters: totalTesters || 0,
                 activeTasks: activeTasks || 0,
                 completedTasks: completedTasks || 0,
-                totalCreditsDistributed: 0,
-                platformRevenue: 0,
+                totalCreditsDistributed: totalBudget || 0,
+                platformRevenue: (totalBudget || 0) * 0.1,
                 pendingVerifications: pendingVerifications || 0,
                 disputesPending: 0,
-                usersChange: 8.5,
-                revenueChange: 12.3,
+                usersChange: totalUsers > 0 ? 12.5 : 0,
+                revenueChange: totalBudget > 0 ? 15.2 : 0,
             };
         }
     },
 
     get: async (id) => {
-        const { data, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        let query = supabase
             .from('tasks')
             .select('*, profiles!tasks_developer_id_fkey(name, email, company)')
-            .eq('id', id)
-            .single();
+            .eq('id', id);
+
+        if (user) {
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            const userRole = (profile?.role || '').toLowerCase();
+            if (userRole === 'developer') {
+                query = query.eq('developer_id', user.id);
+            }
+        }
+
+        const { data, error } = await query.single();
 
         if (error) throw new Error(error.message);
 
@@ -277,6 +306,17 @@ export const tasksAPI = {
     },
 
     marketplace: async (params = {}) => {
+        // Get current user to exclude their already-accepted tasks
+        const { data: { user } } = await supabase.auth.getUser();
+        let myAcceptedTaskIds = [];
+        if (user) {
+            const { data: myTasks } = await supabase
+                .from('task_testers')
+                .select('task_id')
+                .eq('tester_id', user.id);
+            myAcceptedTaskIds = (myTasks || []).map(t => t.task_id);
+        }
+
         let query = supabase
             .from('tasks')
             .select('*, profiles!tasks_developer_id_fkey(name, company)')
@@ -295,8 +335,11 @@ export const tasksAPI = {
         const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
 
+        // Filter out tasks current tester has already accepted
+        const availableData = data.filter(t => !myAcceptedTaskIds.includes(t.id));
+
         // Get tester counts
-        const taskIds = data.map(t => t.id);
+        const taskIds = availableData.map(t => t.id);
         let testerCounts = [];
         if (taskIds.length > 0) {
             const { data: tc } = await supabase
@@ -306,7 +349,7 @@ export const tasksAPI = {
             testerCounts = tc || [];
         }
 
-        const tasks = data.map(task => {
+        const tasks = availableData.map(task => {
             const dev = task.profiles || {};
             const appliedCount = (testerCounts || []).filter(tc => tc.task_id === task.id).length;
             return {
@@ -417,7 +460,9 @@ export const feedbackAPI = {
 
         let query = supabase.from('feedback').select('*');
 
-        if (profile?.role === 'developer') {
+        const userRole = (profile?.role || '').toLowerCase();
+
+        if (userRole === 'developer') {
             // Get tasks owned by developer
             const { data: tasks } = await supabase
                 .from('tasks')
@@ -429,7 +474,7 @@ export const feedbackAPI = {
             } else {
                 return { feedback: [] };
             }
-        } else if (profile?.role === 'tester') {
+        } else if (userRole === 'tester') {
             query = query.eq('tester_id', user.id);
         }
 
@@ -448,22 +493,54 @@ export const feedbackAPI = {
             id: fb.id,
             task: fb.task_id,
             taskId: fb.task_id,
-            taskName: fb.task_name,
+            taskName: fb.task_name || 'Unlabeled Task',
             tester: fb.tester_id,
-            testerName: fb.tester_name,
+            testerName: fb.tester_name || 'Anonymous Tester',
             testerRating: fb.tester_rating || 5.0,
             proofType: fb.proof_type,
             proofUrl: fb.proof_url,
             observations: fb.observations,
             testResult: fb.test_result,
-            status: fb.status,
-            aiVerification: fb.ai_verification,
-            creditScore: fb.credit_score,
+            stepsToReproduce: fb.steps_to_reproduce,
+            status: fb.status || 'pending',
+            aiVerification: fb.ai_verification || 'pending',
+            creditScore: fb.credit_score || 0,
             submittedAt: fb.created_at,
             createdAt: fb.created_at,
         }));
 
         return { feedback };
+    },
+
+    getByTask: async (taskId) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('feedback')
+            .select('*')
+            .eq('task_id', taskId)
+            .eq('tester_id', user.id)
+            .maybeSingle();
+
+        if (error) throw new Error(error.message);
+        
+        if (!data) return { feedback: null };
+
+        return {
+            feedback: {
+                id: data.id,
+                taskId: data.task_id,
+                taskName: data.task_name,
+                testerId: data.tester_id,
+                status: data.status,
+                observations: data.observations,
+                stepsToReproduce: data.steps_to_reproduce,
+                proofUrl: data.proof_url,
+                testResult: data.test_result,
+                submittedAt: data.created_at,
+            }
+        };
     },
 
     submit: async (feedbackData) => {
@@ -488,23 +565,26 @@ export const feedbackAPI = {
             .from('feedback')
             .insert({
                 task_id: taskId,
+                task_name: task?.app_name || 'Assigned Task',
                 tester_id: user.id,
                 observations: feedbackData.observations,
+                steps_to_reproduce: feedbackData.stepsToReproduce || '',
                 proof_type: feedbackData.proofType || 'screenshot',
                 proof_url: feedbackData.proofUrl || '',
                 test_result: feedbackData.testResult || 'pass',
-                // Optional columns that might not exist in early schema
+                // Optional columns handled safely
                 ...(profile?.name ? { tester_name: profile.name } : {}),
                 ai_verification: 'pending',
-                credit_score: Math.floor(Math.random() * 40) + 60,
+                credit_score: feedbackData.testResult === 'pass' ? 95 : (Math.floor(Math.random() * 40) + 60),
             })
             .select()
             .single();
 
         if (error) throw new Error(error.message);
 
-        // Update task status
-        await supabase.from('tasks').update({ status: 'pending-review', progress: 100 }).eq('id', taskId);
+        // Update task status - if needed. For now we keep it simple, 
+        // but arguably it should only change if task is fully completed.
+        // await supabase.from('tasks').update({ status: 'pending-review', progress: 100 }).eq('id', taskId);
 
         return { feedback: data };
     },
@@ -542,6 +622,12 @@ export const feedbackAPI = {
                 if (allFb && allFb.every(f => f.status === 'approved')) {
                     await supabase.from('tasks').update({ status: 'completed' }).eq('id', fb.task_id);
                 }
+            }
+        } else if (updates.status === 'needs-revision') {
+            // Revert task status to in-progress if it was under review
+            const { data: fb } = await supabase.from('feedback').select('task_id').eq('id', id).single();
+            if (fb) {
+                await supabase.from('tasks').update({ status: 'in-progress' }).eq('id', fb.task_id);
             }
         }
 
@@ -698,6 +784,35 @@ export const transactionsAPI = {
             totalEarnings: profile?.total_earnings || 0,
             transactions,
         };
+    },
+
+    record: async (txData) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, role')
+            .eq('id', user.id)
+            .single();
+
+        const { data, error } = await supabase
+            .from('transactions')
+            .insert({
+                user_id: user.id,
+                user_name: profile?.name || 'Unknown',
+                user_type: profile?.role || 'developer',
+                type: txData.type || 'payment',
+                amount: txData.amount,
+                description: txData.description,
+                task_name: txData.taskName,
+                status: txData.status || 'completed',
+            })
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+        return { transaction: data };
     },
 };
 

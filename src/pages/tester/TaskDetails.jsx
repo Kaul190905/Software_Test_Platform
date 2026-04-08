@@ -6,6 +6,8 @@ import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import { useToast } from '../../components/common/Toast';
 import Badge from '../../components/common/Badge';
+import { useAuth } from '../../context/AuthContext';
+import supabase from '../../lib/supabase';
 import { FiCalendar, FiClock, FiCheckCircle, FiInfo, FiArrowLeft } from 'react-icons/fi';
 import './TaskDetails.css';
 
@@ -13,15 +15,28 @@ function TaskDetails() {
     const { taskId } = useParams();
     const navigate = useNavigate();
     const toast = useToast();
+    const { user } = useAuth();
     const [task, setTask] = useState(null);
     const [loading, setLoading] = useState(true);
     const [applying, setApplying] = useState(false);
+    const [alreadyAccepted, setAlreadyAccepted] = useState(false);
 
     useEffect(() => {
         async function fetchTask() {
             try {
                 const res = await tasksAPI.get(taskId);
                 setTask(res.task);
+
+                // Check if current tester has already accepted this task
+                if (user?.id) {
+                    const { data } = await supabase
+                        .from('task_testers')
+                        .select('id')
+                        .eq('task_id', taskId)
+                        .eq('tester_id', user.id)
+                        .maybeSingle();
+                    if (data) setAlreadyAccepted(true);
+                }
             } catch (err) {
                 console.error('Failed to load task:', err);
             } finally {
@@ -29,7 +44,7 @@ function TaskDetails() {
             }
         }
         if (taskId) fetchTask();
-    }, [taskId]);
+    }, [taskId, user]);
 
     if (loading) return <Loader />;
 
@@ -153,17 +168,34 @@ function TaskDetails() {
                     </div>
 
                     <div className="acceptance-card">
-                        <h3>Ready to start?</h3>
-                        <p>By accepting this task, you agree to complete it before the deadline and follow the testing requirements.</p>
-                        <Button
-                            variant="primary"
-                            fullWidth
-                            size="lg"
-                            onClick={handleAcceptTask}
-                            loading={applying}
-                        >
-                            Accept & Start Testing
-                        </Button>
+                        {alreadyAccepted ? (
+                            <>
+                                <h3>✅ Task Accepted</h3>
+                                <p>You have already accepted this task. Head to My Tasks to continue testing.</p>
+                                <Button
+                                    variant="primary"
+                                    fullWidth
+                                    size="lg"
+                                    onClick={() => navigate('/tester/my-tasks')}
+                                >
+                                    Go to My Tasks
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <h3>Ready to start?</h3>
+                                <p>By accepting this task, you agree to complete it before the deadline and follow the testing requirements.</p>
+                                <Button
+                                    variant="primary"
+                                    fullWidth
+                                    size="lg"
+                                    onClick={handleAcceptTask}
+                                    loading={applying}
+                                >
+                                    Accept & Start Testing
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

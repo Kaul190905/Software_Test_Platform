@@ -120,16 +120,27 @@ function FeedbackReview() {
 
             {/* Feedback List */}
             <div className="feedback-list">
+                {filteredFeedbacks.length === 0 && (
+                    <div className="empty-state">
+                        <FiMessageCircle size={48} />
+                        <h3>No Feedback Found</h3>
+                        <p>
+                            {filter === 'all' 
+                                ? "You haven't received any feedback for your tasks yet." 
+                                : `No submissions found with status "${filter}".`}
+                        </p>
+                    </div>
+                )}
                 {filteredFeedbacks.map(feedback => (
                     <div key={feedback.id} className="card feedback-item">
                         <div className="feedback-item-header">
                             <div className="tester-info">
                                 <div className="avatar">{feedback.testerName.split(' ').map(n => n[0]).join('')}</div>
                                 <div>
-                                    <h4 className="tester-name">{feedback.testerName}</h4>
+                                    <h4 className="tester-name">{feedback.testerName || 'Anonymous Tester'}</h4>
                                     <div className="tester-rating">
                                         <FiStar size={12} />
-                                        <span>{feedback.testerRating}</span>
+                                        <span>{feedback.testerRating || 5.0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -211,6 +222,15 @@ function FeedbackReview() {
                             <p>{selectedFeedback.observations}</p>
                         </div>
 
+                        {selectedFeedback.stepsToReproduce && (
+                            <div className="review-section">
+                                <h4>Steps to Reproduce</h4>
+                                <div className="steps-container">
+                                    {selectedFeedback.stepsToReproduce}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="review-section">
                             <h4>Proof</h4>
                             <div className="proof-placeholder">
@@ -218,13 +238,25 @@ function FeedbackReview() {
                                     <div className="video-placeholder">
                                         <FiVideo size={40} />
                                         <p>Video Recording</p>
-                                        <Button variant="secondary" size="sm">Play Video</Button>
+                                        <Button 
+                                            variant="secondary" 
+                                            size="sm"
+                                            onClick={() => window.open(selectedFeedback.proofUrl, '_blank')}
+                                        >
+                                            Open Video Link
+                                        </Button>
                                     </div>
                                 ) : (
                                     <div className="screenshot-placeholder">
                                         <FiImage size={40} />
-                                        <p>3 Screenshots attached</p>
-                                        <Button variant="secondary" size="sm">View All</Button>
+                                        <p>Proof Screenshots</p>
+                                        <Button 
+                                            variant="secondary" 
+                                            size="sm"
+                                            onClick={() => window.open(selectedFeedback.proofUrl, '_blank')}
+                                        >
+                                            View Screenshots
+                                        </Button>
                                     </div>
                                 )}
                             </div>

@@ -20,6 +20,8 @@ function SubmitFeedback() {
     });
     const [errors, setErrors] = useState({});
     const [task, setTask] = useState({ appName: 'Loading...', testTypes: [], credits: 0 });
+    const [existingFeedback, setExistingFeedback] = useState(null);
+    const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
 
     useEffect(() => {
         async function fetchTask() {
@@ -30,7 +32,34 @@ function SubmitFeedback() {
                 console.error('Failed to load task:', err);
             }
         }
-        if (taskId) fetchTask();
+
+        async function checkExistingFeedback() {
+            try {
+                const res = await feedbackAPI.getByTask(taskId);
+                if (res.feedback) {
+                    setExistingFeedback(res.feedback);
+                    // Pre-fill form if needs revision
+                    if (res.feedback.status === 'needs-revision') {
+                        setFormData({
+                            testResult: res.feedback.testResult,
+                            observations: res.feedback.observations,
+                            stepsToReproduce: res.feedback.stepsToReproduce,
+                            proofType: 'screenshot', // Or detect from url
+                            proofUrl: res.feedback.proofUrl,
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check existing feedback:', err);
+            } finally {
+                setIsLoadingFeedback(false);
+            }
+        }
+
+        if (taskId) {
+            fetchTask();
+            checkExistingFeedback();
+        }
     }, [taskId]);
 
     const testResults = [
@@ -84,6 +113,7 @@ function SubmitFeedback() {
                 task: taskId,
                 testResult: formData.testResult,
                 observations: formData.observations,
+                stepsToReproduce: formData.stepsToReproduce,
                 proofType: formData.proofType,
                 proofUrl: formData.proofUrl,
             });
@@ -112,8 +142,42 @@ function SubmitFeedback() {
             <div className="submit-container">
                 {/* Main Form */}
                 <div className="card submit-form-card">
-                    <form onSubmit={handleSubmit}>
-                        {/* Test Result */}
+                    {isLoadingFeedback ? (
+                        <div className="loading-state">Checking submission status...</div>
+                    ) : existingFeedback && existingFeedback.status !== 'needs-revision' && existingFeedback.status !== 'rejected' ? (
+                        <div className="submission-lock-state">
+                            <div className="lock-icon">
+                                {existingFeedback.status === 'approved' ? <FiCheckCircle size={48} className="success" /> : <FiSend size={48} className="warning" />}
+                            </div>
+                            <h2>Feedback Already Submitted</h2>
+                            <p>
+                                {existingFeedback.status === 'approved' 
+                                    ? 'Your work has already been approved and rewards have been credited.' 
+                                    : 'Your submission is currently under review. You can resubmit if the developer requests a revision.'}
+                            </p>
+                            <div className="submission-details">
+                                <div className="detail-row">
+                                    <span className="label">Status</span>
+                                    <span className={`value status-${existingFeedback.status}`}>{existingFeedback.status.replace('-', ' ')}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="label">Submitted On</span>
+                                    <span className="value">{new Date(existingFeedback.submittedAt).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <Button variant="secondary" onClick={() => navigate('/tester/dashboard')}>
+                                Return to Dashboard
+                            </Button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            {existingFeedback && existingFeedback.status === 'needs-revision' && (
+                                <div className="revision-alert">
+                                    <FiAlertCircle size={20} />
+                                    <span>The developer has requested changes. Please update your feedback and resubmit.</span>
+                                </div>
+                            )}
+                            {/* Test Result */}
                         <div className="form-section">
                             <h3 className="section-title">Test Result</h3>
                             <p className="section-description">What was the overall outcome of your testing?</p>
@@ -237,7 +301,8 @@ function SubmitFeedback() {
                             </Button>
                         </div>
                     </form>
-                </div>
+                )}
+            </div>
 
                 {/* Sidebar Info */}
                 <div className="submit-sidebar">

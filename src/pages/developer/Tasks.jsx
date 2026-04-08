@@ -101,6 +101,17 @@ function Tasks() {
                             </tr>
                         </thead>
                         <tbody>
+                            {filteredTasks.length === 0 && (
+                                <tr>
+                                    <td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>
+                                        <div className="empty-state">
+                                            <FiClipboard size={48} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                                            <h3>No Tasks Found</h3>
+                                            <p>You haven't created any tasks yet or no tasks match your filter.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                             {filteredTasks.map(task => {
                                 const deadlineStatus = getDeadlineStatus(task.deadline);
                                 return (
