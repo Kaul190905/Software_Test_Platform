@@ -45,7 +45,7 @@ function Wallet() {
             <div className="wallet-stats-grid">
                 <div className="card wallet-stat-card primary">
                     <div className="stat-icon">
-                        <FiDollarSign size={24} />
+                        <FiTrendingUp size={24} />
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Available Balance</span>

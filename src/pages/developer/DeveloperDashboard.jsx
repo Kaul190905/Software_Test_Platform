@@ -59,7 +59,7 @@ function DeveloperDashboard() {
         {
             label: 'Total Budget Spent',
             value: formatCurrency(dashStats.totalBudgetSpent),
-            icon: FiDollarSign,
+            icon: FiTrendingUp,
             iconClass: 'secondary',
         },
         {
@@ -143,7 +143,7 @@ function DeveloperDashboard() {
                             </Link>
                         </div>
                         <div className="task-list">
-                            {tasks.slice(0, 4).map(task => {
+                            {tasks.filter(t => t.status !== 'completed').slice(0, 4).map(task => {
                                 const deadlineStatus = getDeadlineStatus(task.deadline);
                                 return (
                                     <div key={task._id || task.id} className="task-item">

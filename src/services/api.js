@@ -615,6 +615,18 @@ export const feedbackAPI = {
                         total_earnings: (tester.total_earnings || 0) + creditAmount,
                         completed_tests: (tester.completed_tests || 0) + 1,
                     }).eq('id', fb.tester_id);
+
+                    // Record the credit transfer transaction for the tester
+                    await transactionsAPI.record({
+                        userId: fb.tester_id,
+                        userName: tester.name,
+                        userType: 'tester',
+                        type: 'earning',
+                        amount: creditAmount,
+                        description: `Earnings for feedback approval`,
+                        taskName: updates.taskName || 'Task Feedback',
+                        status: 'completed'
+                    });
                 }
 
                 // Check if all feedback approved → mark task completed
@@ -787,21 +799,32 @@ export const transactionsAPI = {
     },
 
     record: async (txData) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
+        // Use provided userId or fall back to current authenticated user
+        let targetUserId = txData.userId;
+        let targetUserName = txData.userName;
+        let targetUserType = txData.userType;
 
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, role')
-            .eq('id', user.id)
-            .single();
+        if (!targetUserId) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Not authenticated');
+            targetUserId = user.id;
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('name, role')
+                .eq('id', targetUserId)
+                .single();
+            
+            targetUserName = profile?.name;
+            targetUserType = profile?.role;
+        }
 
         const { data, error } = await supabase
             .from('transactions')
             .insert({
-                user_id: user.id,
-                user_name: profile?.name || 'Unknown',
-                user_type: profile?.role || 'developer',
+                user_id: targetUserId,
+                user_name: targetUserName || 'Unknown',
+                user_type: targetUserType || 'tester',
                 type: txData.type || 'payment',
                 amount: txData.amount,
                 description: txData.description,

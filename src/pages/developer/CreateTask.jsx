@@ -268,7 +268,7 @@ function CreateTask() {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label">Budget (USD) *</label>
+                                <label className="form-label">Budget (INR) *</label>
                                 <div className="input-with-icon">
                                     <FiDollarSign className="input-icon" />
                                     <input
@@ -282,7 +282,7 @@ function CreateTask() {
                                     />
                                 </div>
                                 {errors.budget && <p className="form-error">{errors.budget}</p>}
-                                <p className="form-hint">Minimum $50. AI will allocate credits based on testing complexity.</p>
+                                <p className="form-hint">Minimum ₹50. AI will allocate credits based on testing complexity.</p>
                             </div>
 
                             <div className="form-group">

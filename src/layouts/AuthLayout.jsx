@@ -8,6 +8,7 @@ function AuthLayout() {
     const { isLoading, isAuthenticated, user } = useAuth();
 
     if (isLoading) {
+        console.debug('[AuthLayout] Rendering loader (isLoading=true)');
         return <Loader fullScreen text="Loading..." />;
     }
 

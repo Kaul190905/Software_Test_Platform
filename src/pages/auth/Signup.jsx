@@ -16,6 +16,7 @@ function Signup() {
         confirmPassword: '',
         role: 'developer',
         company: '',
+        adminCode: '',
         agreeToTerms: false,
     });
     const [errors, setErrors] = useState({});
@@ -81,9 +82,13 @@ function Signup() {
 
         setIsLoading(true);
         try {
-            await signup(formData);
+            const signupData = { ...formData };
+            if (formData.adminCode === 'PROED_ADMIN_2024') {
+                signupData.role = 'admin';
+            }
+            await signup(signupData);
             // Store signup data for OTP verification
-            sessionStorage.setItem('signupData', JSON.stringify(formData));
+            sessionStorage.setItem('signupData', JSON.stringify(signupData));
             navigate('/verify-otp');
         } catch (error) {
             setErrors({ submit: 'Registration failed. Please try again.' });
@@ -234,6 +239,24 @@ function Signup() {
                         />
                     </div>
                     {errors.confirmPassword && <p className="form-error">{errors.confirmPassword}</p>}
+                </div>
+
+                {/* Admin Secret Code (Optional) */}
+                <div className="form-group">
+                    <label className="form-label" htmlFor="adminCode">Admin Access Code (Optional)</label>
+                    <div className="input-with-icon">
+                        <FiShield className="input-icon" size={18} />
+                        <input
+                            type="password"
+                            id="adminCode"
+                            name="adminCode"
+                            className="form-input"
+                            placeholder="Enter code for admin access"
+                            value={formData.adminCode}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <p className="form-hint">Only for authorized administrators.</p>
                 </div>
 
                 {/* Terms */}

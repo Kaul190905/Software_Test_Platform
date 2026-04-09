@@ -11,23 +11,32 @@ export function AuthProvider({ children }) {
     // Track whether login/signup is in progress to avoid onAuthStateChange races
     const loginInProgressRef = useRef(false);
 
-    // Fetch profile data from profiles table
+    // Fetch profile data from profiles table with a timeout
     const fetchProfile = async (authUser) => {
         if (!authUser) return null;
+        
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+        );
+
         try {
-            const { data, error } = await supabase
+            console.debug('[Auth] fetchProfile: Fetching profile for', authUser.id);
+            const fetchPromise = supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', authUser.id)
                 .single();
 
+            const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
             if (error) {
-                console.error('Error fetching profile:', error.message);
+                console.error('[Auth] Error fetching profile:', error.message);
                 return null;
             }
             return data;
         } catch (e) {
-            console.error('fetchProfile exception:', e);
+            console.error('[Auth] fetchProfile exception:', e.message || e);
             return null;
         }
     };
@@ -37,28 +46,35 @@ export function AuthProvider({ children }) {
         let isMounted = true;
 
         const initAuth = async () => {
+            console.debug('[Auth] Initializing auth state...');
             try {
                 // 1. Try to get current session
                 const { data, error } = await supabase.auth.getSession();
                 
                 if (error) {
-                    console.error('Auth getSession error:', error.message);
+                    console.error('[Auth] getSession error:', error.message);
                 }
 
                 const session = data?.session;
+                console.debug('[Auth] Session retrieval complete:', !!session);
 
                 if (session?.user && isMounted) {
+                    console.debug('[Auth] User found in session, fetching profile...');
                     const profile = await fetchProfile(session.user);
                     if (profile && isMounted) {
                         setUser(profile);
                         setIsAuthenticated(true);
+                        console.debug('[Auth] Profile loaded successfully');
+                    } else {
+                        console.warn('[Auth] No profile found for session user');
                     }
                 }
             } catch (e) {
-                console.error('Auth init exception:', e);
+                console.error('[Auth] Init exception:', e);
             } finally {
                 if (isMounted) {
                     setIsLoading(false);
+                    console.debug('[Auth] Initialization finished, loading set to false');
                 }
             }
         };
@@ -69,7 +85,7 @@ export function AuthProvider({ children }) {
                 // Skip if login/signup is being handled directly
                 if (loginInProgressRef.current) return;
 
-                console.log('Auth state change:', event, !!session);
+                console.debug('[Auth] State change event:', event, 'Session active:', !!session);
 
                 if (session?.user) {
                     const profile = await fetchProfile(session.user);
@@ -80,7 +96,7 @@ export function AuthProvider({ children }) {
                         } else {
                             // If profile fetch failed but session exists, 
                             // we might still want to end loading
-                            console.warn('Session exists but profile fetch failed');
+                            console.warn('[Auth] Session exists but profile fetch failed');
                         }
                         setIsLoading(false);
                     }
@@ -99,9 +115,13 @@ export function AuthProvider({ children }) {
 
         // Safety timeout to ensure loading eventually stops
         const safetyTimeout = setTimeout(() => {
-            if (isMounted && isLoading) {
-                console.warn('Auth initialization took too long, forcing loading to stop');
-                setIsLoading(false);
+            if (isMounted) {
+                setIsLoading(currentLoading => {
+                    if (currentLoading) {
+                        console.warn('[Auth] Safety timeout triggered: forcing isLoading=false after 5s');
+                    }
+                    return false;
+                });
             }
         }, 5000);
 

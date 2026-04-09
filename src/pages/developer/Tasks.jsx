@@ -13,7 +13,7 @@ function Tasks() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('active');
 
     useEffect(() => {
         async function fetchTasks() {
@@ -31,7 +31,11 @@ function Tasks() {
 
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.appName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+        const matchesStatus = statusFilter === 'all' 
+            ? true 
+            : statusFilter === 'active' 
+                ? task.status !== 'completed' 
+                : task.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
@@ -77,7 +81,8 @@ function Tasks() {
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
-                            <option value="all">All Status</option>
+                            <option value="active">Active Tasks</option>
+                            <option value="all">All Tasks</option>
                             <option value="open">Open</option>
                             <option value="in-progress">In Progress</option>
                             <option value="pending-review">Pending Review</option>

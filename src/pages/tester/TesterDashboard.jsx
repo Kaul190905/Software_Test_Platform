@@ -50,7 +50,7 @@ function TesterDashboard() {
         {
             label: 'Total Earnings',
             value: formatCurrency(stats.totalEarnings || 0),
-            icon: FiDollarSign,
+            icon: FiTrendingUp,
             iconClass: 'success',
             change: '+12%',
             positive: true,
