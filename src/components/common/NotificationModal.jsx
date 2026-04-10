@@ -1,10 +1,20 @@
-import { FiX, FiBell, FiCheck } from 'react-icons/fi';
+import { FiX, FiBell, FiCheck, FiInfo, FiExternalLink } from 'react-icons/fi';
+import { formatRelativeTime } from '../../utils/helpers';
+import { useNavigate } from 'react-router-dom';
 import './NotificationModal.css';
 
-function NotificationModal({ isOpen, onClose, notifications }) {
+function NotificationModal({ isOpen, onClose, notifications, onMarkAllAsRead }) {
+    const navigate = useNavigate();
     if (!isOpen) return null;
 
     const unreadCount = notifications.filter(n => n.unread).length;
+
+    const handleNotificationClick = (notification) => {
+        if (notification.link) {
+            navigate(notification.link);
+            onClose();
+        }
+    };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -33,15 +43,24 @@ function NotificationModal({ isOpen, onClose, notifications }) {
                             {notifications.map(notification => (
                                 <div
                                     key={notification.id}
-                                    className={`notification-card ${notification.unread ? 'unread' : ''}`}
+                                    className={`notification-card ${notification.unread ? 'unread' : ''} ${notification.link ? 'clickable' : ''}`}
+                                    onClick={() => handleNotificationClick(notification)}
                                 >
                                     <div className="notification-card-dot" />
                                     <div className="notification-card-content">
                                         <div className="notification-card-header">
                                             <h3>{notification.title}</h3>
-                                            <span className="notification-card-time">{notification.time}</span>
+                                            <span className="notification-card-time">
+                                                {formatRelativeTime(notification.time)}
+                                            </span>
                                         </div>
                                         <p>{notification.message}</p>
+                                        {notification.link && (
+                                            <div className="notification-card-link">
+                                                <span>View details</span>
+                                                <FiExternalLink size={12} />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -54,7 +73,7 @@ function NotificationModal({ isOpen, onClose, notifications }) {
                         Close
                     </button>
                     {unreadCount > 0 && (
-                        <button className="btn btn-primary">
+                        <button className="btn btn-primary" onClick={onMarkAllAsRead}>
                             Mark All as Read
                         </button>
                     )}

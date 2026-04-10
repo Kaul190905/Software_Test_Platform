@@ -4,6 +4,7 @@ import { FiMenu, FiX, FiBell, FiChevronDown, FiLogOut, FiUser } from 'react-icon
 import { useState, useRef, useEffect } from 'react';
 import { getInitials } from '../../utils/helpers';
 import NotificationModal from './NotificationModal';
+import { useNotifications } from '../../context/NotificationContext';
 import './Navbar.css';
 
 function Navbar({ onMenuToggle, isSidebarOpen }) {
@@ -26,14 +27,7 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Mock notifications
-    const notifications = [
-        { id: 1, title: 'Task Completed', message: 'Banking Dashboard testing completed', time: '5m ago', unread: true },
-        { id: 2, title: 'New Feedback', message: 'You have new feedback from Sarah', time: '1h ago', unread: true },
-        { id: 3, title: 'Payment Received', message: 'Payment of ₹500 processed', time: '3h ago', unread: false },
-    ];
-
-    const unreadCount = notifications.filter(n => n.unread).length;
+    const { notifications, unreadCount, markAllAsRead } = useNotifications();
 
 
     const handleLogout = () => {
@@ -137,7 +131,8 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
             <NotificationModal 
                 isOpen={isNotificationModalOpen} 
                 onClose={() => setIsNotificationModalOpen(false)} 
-                notifications={notifications} 
+                notifications={notifications}
+                onMarkAllAsRead={markAllAsRead}
             />
         </nav>
     );

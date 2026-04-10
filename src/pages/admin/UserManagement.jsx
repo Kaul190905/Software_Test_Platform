@@ -22,6 +22,13 @@ function UserManagement() {
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        email: '',
+        role: '',
+        status: ''
+    });
 
     useEffect(() => {
         async function fetchUsers() {
@@ -84,18 +91,54 @@ function UserManagement() {
     };
 
     const handleDelete = async (userId) => {
+        if (!window.confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return;
+        
         try {
-            await usersAPI.update(userId, { status: 'inactive' });
+            await usersAPI.delete(userId);
             setUsers(prev => prev.filter(u => (u._id || u.id) !== userId));
-            toast.success('User Removed', 'User has been removed from the platform');
+            toast.success('User Deleted', 'The user has been permanently removed from the platform.');
             setShowDropdown(null);
         } catch (err) {
-            toast.error('Error', err.message);
+            toast.error('Deletion Failed', err.message);
         }
+    };
+
+    const handleEditSave = async () => {
+        if (!editFormData.name || !editFormData.email) {
+            toast.error('Validation Error', 'Name and Email are required.');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const { user: updatedUser } = await usersAPI.update(selectedUser.id, editFormData);
+            
+            setUsers(prev => prev.map(u => 
+                (u._id || u.id) === selectedUser.id ? { ...u, ...editFormData } : u
+            ));
+            
+            toast.success('User Updated', 'User details have been successfully saved.');
+            setShowModal(false);
+        } catch (err) {
+            toast.error('Update Failed', err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const openEditModal = (user) => {
         setSelectedUser(user);
+        setEditFormData({
+            name: user.name || '',
+            email: user.email || '',
+            role: user.role || 'tester',
+            status: user.status || 'active'
+        });
         setShowModal(true);
         setShowDropdown(null);
     };
@@ -256,32 +299,46 @@ function UserManagement() {
                 {selectedUser && (
                     <div className="edit-user-form">
                         <div className="form-group">
-                            <label className="form-label">Name</label>
+                            <label className="form-label">Full Name</label>
                             <input
                                 type="text"
+                                name="name"
                                 className="form-input"
-                                defaultValue={selectedUser.name}
+                                value={editFormData.name}
+                                onChange={handleEditChange}
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Email</label>
+                            <label className="form-label">Email Address</label>
                             <input
                                 type="email"
+                                name="email"
                                 className="form-input"
-                                defaultValue={selectedUser.email}
+                                value={editFormData.email}
+                                onChange={handleEditChange}
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Role</label>
-                            <select className="form-input" defaultValue={selectedUser.role}>
+                            <label className="form-label">Platform Role</label>
+                            <select 
+                                name="role" 
+                                className="form-input" 
+                                value={editFormData.role}
+                                onChange={handleEditChange}
+                            >
                                 <option value="developer">Developer</option>
                                 <option value="tester">Tester</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Status</label>
-                            <select className="form-input" defaultValue={selectedUser.status}>
+                            <label className="form-label">Account Status</label>
+                            <select 
+                                name="status" 
+                                className="form-input" 
+                                value={editFormData.status}
+                                onChange={handleEditChange}
+                            >
                                 <option value="active">Active</option>
                                 <option value="pending">Pending</option>
                                 <option value="inactive">Inactive</option>
@@ -289,13 +346,10 @@ function UserManagement() {
                             </select>
                         </div>
                         <div className="modal-actions">
-                            <Button variant="secondary" onClick={() => setShowModal(false)}>
+                            <Button variant="secondary" onClick={() => setShowModal(false)} disabled={isSaving}>
                                 Cancel
                             </Button>
-                            <Button variant="primary" onClick={() => {
-                                toast.success('User Updated', 'User details have been saved');
-                                setShowModal(false);
-                            }}>
+                            <Button variant="primary" onClick={handleEditSave} loading={isSaving}>
                                 Save Changes
                             </Button>
                         </div>

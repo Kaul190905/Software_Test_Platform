@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './components/common/Toast';
 
 // Landing Page
@@ -43,56 +44,58 @@ function App() {
     return (
         <AuthProvider>
             <ToastProvider>
-                <Routes>
-                    {/* Public Auth Routes */}
-                    <Route element={<AuthLayout />}>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
-                        <Route path="/verify-otp" element={<OTPVerification />} />
-                    </Route>
+                <NotificationProvider>
+                    <Routes>
+                        {/* Public Auth Routes */}
+                        <Route element={<AuthLayout />}>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/signup" element={<Signup />} />
+                            <Route path="/verify-otp" element={<OTPVerification />} />
+                        </Route>
 
-                    {/* Developer Routes */}
-                    <Route path="/developer" element={<DashboardLayout />}>
-                        <Route path="dashboard" element={<DeveloperDashboard />} />
-                        <Route path="create-task" element={<CreateTask />} />
-                        <Route path="tasks" element={<Tasks />} />
-                        <Route path="feedback" element={<FeedbackReview />} />
-                        <Route path="payments" element={<Payment />} />
-                        <Route path="reports" element={<Reports />} />
-                        <Route index element={<Navigate to="dashboard" replace />} />
-                    </Route>
+                        {/* Developer Routes */}
+                        <Route path="/developer" element={<DashboardLayout />}>
+                            <Route path="dashboard" element={<DeveloperDashboard />} />
+                            <Route path="create-task" element={<CreateTask />} />
+                            <Route path="tasks" element={<Tasks />} />
+                            <Route path="feedback" element={<FeedbackReview />} />
+                            <Route path="payments" element={<Payment />} />
+                            <Route path="reports" element={<Reports />} />
+                            <Route index element={<Navigate to="dashboard" replace />} />
+                        </Route>
 
-                    {/* Tester Routes */}
-                    <Route path="/tester" element={<DashboardLayout />}>
-                        <Route path="dashboard" element={<TesterDashboard />} />
-                        <Route path="marketplace" element={<Marketplace />} />
-                        <Route path="task/:taskId" element={<TaskDetails />} />
-                        <Route path="my-tasks" element={<MyTasks />} />
-                        <Route path="submit-proof" element={<MyTasks />} />
-                        <Route path="submit/:taskId" element={<SubmitFeedback />} />
-                        <Route path="wallet" element={<Wallet />} />
-                        <Route path="status" element={<Status />} />
-                        <Route index element={<Navigate to="dashboard" replace />} />
-                    </Route>
+                        {/* Tester Routes */}
+                        <Route path="/tester" element={<DashboardLayout />}>
+                            <Route path="dashboard" element={<TesterDashboard />} />
+                            <Route path="marketplace" element={<Marketplace />} />
+                            <Route path="task/:taskId" element={<TaskDetails />} />
+                            <Route path="my-tasks" element={<MyTasks />} />
+                            <Route path="submit-proof" element={<MyTasks />} />
+                            <Route path="submit/:taskId" element={<SubmitFeedback />} />
+                            <Route path="wallet" element={<Wallet />} />
+                            <Route path="status" element={<Status />} />
+                            <Route index element={<Navigate to="dashboard" replace />} />
+                        </Route>
 
-                    {/* Admin Routes */}
-                    <Route path="/admin" element={<DashboardLayout />}>
-                        <Route index element={<Navigate to="dashboard" replace />} />
-                        <Route path="requests" element={<UserRequests />} />
-                        <Route path="requests/:userId" element={<UserRequestDetails />} />
-                        <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="users" element={<UserManagement />} />
-                        <Route path="tasks" element={<AdminTasks />} />
-                        <Route path="verification" element={<Verification />} />
-                        <Route path="credits" element={<AdminDashboard />} />
-                    </Route>
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={<DashboardLayout />}>
+                            <Route index element={<Navigate to="dashboard" replace />} />
+                            <Route path="requests" element={<UserRequests />} />
+                            <Route path="requests/:userId" element={<UserRequestDetails />} />
+                            <Route path="dashboard" element={<AdminDashboard />} />
+                            <Route path="users" element={<UserManagement />} />
+                            <Route path="tasks" element={<AdminTasks />} />
+                            <Route path="verification" element={<Verification />} />
+                            <Route path="credits" element={<AdminDashboard />} />
+                        </Route>
 
-                    {/* Landing Page */}
-                    <Route path="/" element={<LandingPage />} />
+                        {/* Landing Page */}
+                        <Route path="/" element={<LandingPage />} />
 
-                    {/* Catch-all */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        {/* Catch-all */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </NotificationProvider>
             </ToastProvider>
         </AuthProvider>
     );

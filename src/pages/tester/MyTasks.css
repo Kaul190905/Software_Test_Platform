@@ -91,6 +91,28 @@
     color: var(--text-secondary);
 }
 
+.meta-item.full-width {
+    grid-column: span 2;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+    margin-top: 0.25rem;
+}
+
+.app-link-inline {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.app-link-inline:hover {
+    color: var(--primary-light, #818cf8);
+    text-decoration: underline;
+}
+
 .task-progress-section {
     display: flex;
     flex-direction: column;

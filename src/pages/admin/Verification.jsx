@@ -2,18 +2,30 @@ import { useState, useEffect } from 'react';
 import { feedbackAPI } from '../../services/api';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Button from '../../components/common/Button';
-import { FiCheckCircle, FiXCircle, FiInfo, FiEye } from 'react-icons/fi';
+import { useToast } from '../../components/common/Toast';
+import { FiCheckCircle, FiXCircle, FiInfo, FiEye, FiDollarSign } from 'react-icons/fi';
 import './Verification.css';
 
 function Verification() {
+    const toast = useToast();
     const [pendingVerifications, setPendingVerifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [actionCredits, setActionCredits] = useState({}); // Tracking custom credits per item
 
     useEffect(() => {
         async function fetchPending() {
             try {
-                const res = await feedbackAPI.list({ status: 'pending' });
-                setPendingVerifications(res.feedback || []);
+                // Now fetching specifically items verified by developers
+                const res = await feedbackAPI.list({ status: 'dev-approved' });
+                const feedbackItems = res.feedback || [];
+                setPendingVerifications(feedbackItems);
+                
+                // Initialize default credits (AI Score * 3)
+                const initialCredits = {};
+                feedbackItems.forEach(item => {
+                    initialCredits[item._id || item.id] = (item.creditScore || 0) * 3;
+                });
+                setActionCredits(initialCredits);
             } catch (err) {
                 console.error('Failed to load verifications:', err);
             } finally {
@@ -22,6 +34,36 @@ function Verification() {
         }
         fetchPending();
     }, []);
+
+    const handleCreditChange = (id, value) => {
+        setActionCredits(prev => ({ ...prev, [id]: parseInt(value) || 0 }));
+    };
+
+    const handleApprove = async (id) => {
+        try {
+            const credits = actionCredits[id] || 0;
+            await feedbackAPI.update(id, { 
+                status: 'approved',
+                customCredits: credits
+            });
+            
+            setPendingVerifications(prev => prev.filter(v => (v._id || v.id) !== id));
+            toast.success('Credits Released', `Successfully released ${credits} credits to the tester.`);
+        } catch (err) {
+            toast.error('Approval Failed', err.message);
+        }
+    };
+
+    const handleReject = async (id) => {
+        if (!window.confirm('Are you sure you want to reject this submission?')) return;
+        try {
+            await feedbackAPI.update(id, { status: 'rejected' });
+            setPendingVerifications(prev => prev.filter(v => (v._id || v.id) !== id));
+            toast.warning('Submission Rejected', 'The tester will be notified.');
+        } catch (err) {
+            toast.error('Rejection Failed', err.message);
+        }
+    };
 
     return (
         <div className="verification-page">
@@ -63,10 +105,35 @@ function Verification() {
                         </div>
 
                         <div className="verification-footer">
-                            <div className="admin-actions">
-                                <Button variant="secondary" icon={<FiInfo />}>Request Revision</Button>
-                                <Button variant="danger" icon={<FiXCircle />}>Reject</Button>
-                                <Button variant="success" icon={<FiCheckCircle />}>Approve & Release Credits</Button>
+                            <div className="credit-action-box">
+                                <div className="credit-input-group">
+                                    <label>Credits to Release:</label>
+                                    <div className="input-with-icon">
+                                        <FiDollarSign className="input-icon" />
+                                        <input 
+                                            type="number" 
+                                            className="credit-input"
+                                            value={actionCredits[item._id || item.id] || 0}
+                                            onChange={(e) => handleCreditChange(item._id || item.id, e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="admin-actions">
+                                    <Button 
+                                        variant="danger" 
+                                        icon={<FiXCircle />}
+                                        onClick={() => handleReject(item._id || item.id)}
+                                    >
+                                        Reject
+                                    </Button>
+                                    <Button 
+                                        variant="success" 
+                                        icon={<FiCheckCircle />}
+                                        onClick={() => handleApprove(item._id || item.id)}
+                                    >
+                                        Approve & Release Credits
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { tasksAPI } from '../../services/api';
 import { getDeadlineStatus, formatCurrency } from '../../utils/helpers';
@@ -59,9 +60,11 @@ function Tasks() {
                     <h1 className="page-title">My Tasks</h1>
                     <p className="page-subtitle">Manage and track your testing requests.</p>
                 </div>
-                <Button variant="primary" icon={<FiPlus />}>
-                    Create New Task
-                </Button>
+                <Link to="/developer/create-task">
+                    <Button variant="primary" icon={<FiPlus />}>
+                        Create New Task
+                    </Button>
+                </Link>
             </div>
 
             <div className="card tasks-list-card">

@@ -80,8 +80,53 @@
 .verification-footer {
     padding-top: 1.5rem;
     border-top: 1px solid var(--border-color);
+}
+
+.credit-action-box {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.credit-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 180px;
+}
+
+.credit-input-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+}
+
+.credit-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    padding-left: 2rem;
+    background: var(--bg-offset);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.125rem;
 }
 
 .admin-actions {

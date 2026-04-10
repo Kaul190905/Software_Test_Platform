@@ -38,7 +38,8 @@ function FeedbackReview() {
     const getStatusBadge = (status) => {
         const statusMap = {
             'pending': { label: 'Pending Review', variant: 'warning' },
-            'approved': { label: 'Approved', variant: 'success' },
+            'dev-approved': { label: 'Verified by Dev', variant: 'info' },
+            'approved': { label: 'Accepted (Credits Released)', variant: 'success' },
             'needs-revision': { label: 'Needs Revision', variant: 'danger' },
         };
         const config = statusMap[status] || { label: status, variant: 'secondary' };
@@ -47,11 +48,11 @@ function FeedbackReview() {
 
     const handleApprove = async (id) => {
         try {
-            await feedbackAPI.update(id, { status: 'approved' });
+            await feedbackAPI.update(id, { status: 'dev-approved' });
             setFeedbacks(prev => prev.map(f =>
-                (f._id || f.id) === id ? { ...f, status: 'approved' } : f
+                (f._id || f.id) === id ? { ...f, status: 'dev-approved' } : f
             ));
-            toast.success('Feedback Approved', 'Credits have been released to the tester.');
+            toast.success('Feedback Verified', 'Sent to Administrator for final credit release.');
             setShowModal(false);
         } catch (err) {
             toast.error('Error', err.message);
@@ -105,10 +106,16 @@ function FeedbackReview() {
                     Pending ({feedbacks.filter(f => f.status === 'pending').length})
                 </button>
                 <button
+                    className={`filter-tab ${filter === 'dev-approved' ? 'active' : ''}`}
+                    onClick={() => setFilter('dev-approved')}
+                >
+                    Verified ({feedbacks.filter(f => f.status === 'dev-approved').length})
+                </button>
+                <button
                     className={`filter-tab ${filter === 'approved' ? 'active' : ''}`}
                     onClick={() => setFilter('approved')}
                 >
-                    Approved ({feedbacks.filter(f => f.status === 'approved').length})
+                    Released ({feedbacks.filter(f => f.status === 'approved').length})
                 </button>
                 <button
                     className={`filter-tab ${filter === 'needs-revision' ? 'active' : ''}`}

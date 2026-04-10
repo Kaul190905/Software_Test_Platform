@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { formatDate, formatCredits } from '../../utils/helpers';
-import { FiArrowRight, FiClock, FiCheckCircle, FiDollarSign } from 'react-icons/fi';
+import { FiArrowRight, FiClock, FiCheckCircle, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import './MyTasks.css';
 
 function MyTasks() {
@@ -138,6 +138,12 @@ function MyTasks() {
                             <div className="meta-item">
                                 <FiDollarSign size={14} />
                                 <span>Credits: {formatCredits(task.credits || task.budget || 0)}</span>
+                            </div>
+                            <div className="meta-item full-width">
+                                <FiExternalLink size={14} />
+                                <a href={task.appUrl} target="_blank" rel="noopener noreferrer" className="app-link-inline">
+                                    Visit App URL
+                                </a>
                             </div>
                         </div>
 

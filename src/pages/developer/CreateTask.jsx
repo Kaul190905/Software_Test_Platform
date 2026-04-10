@@ -35,6 +35,7 @@ function CreateTask() {
         selectedTestTypes: [],
         budget: 300,
         deadline: '',
+        requiredTesters: 3,
     });
     const [errors, setErrors] = useState({});
 
@@ -86,6 +87,9 @@ function CreateTask() {
                 newErrors.deadline = 'Deadline is required';
             } else if (new Date(formData.deadline) <= new Date()) {
                 newErrors.deadline = 'Deadline must be in the future';
+            }
+            if (!formData.requiredTesters || formData.requiredTesters < 1) {
+                newErrors.requiredTesters = 'At least 1 tester is required';
             }
         }
 
@@ -286,20 +290,36 @@ function CreateTask() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Deadline *</label>
-                                <div className="input-with-icon">
-                                    <FiCalendar className="input-icon" />
-                                    <input
-                                        type="date"
-                                        name="deadline"
-                                        className={`form-input ${errors.deadline ? 'error' : ''}`}
-                                        value={formData.deadline}
-                                        onChange={handleChange}
-                                        min={new Date().toISOString().split('T')[0]}
-                                    />
-                                </div>
-                                {errors.deadline && <p className="form-error">{errors.deadline}</p>}
+                                <label className="form-label">Number of Testers *</label>
+                                <input
+                                    type="number"
+                                    name="requiredTesters"
+                                    className={`form-input ${errors.requiredTesters ? 'error' : ''}`}
+                                    placeholder="3"
+                                    min="1"
+                                    max="50"
+                                    value={formData.requiredTesters}
+                                    onChange={handleChange}
+                                />
+                                {errors.requiredTesters && <p className="form-error">{errors.requiredTesters}</p>}
+                                <p className="form-hint">Total testers needed for this project.</p>
                             </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Deadline *</label>
+                            <div className="input-with-icon">
+                                <FiCalendar className="input-icon" />
+                                <input
+                                    type="date"
+                                    name="deadline"
+                                    className={`form-input ${errors.deadline ? 'error' : ''}`}
+                                    value={formData.deadline}
+                                    onChange={handleChange}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
+                            {errors.deadline && <p className="form-error">{errors.deadline}</p>}
                         </div>
 
                         {/* Summary */}
@@ -317,6 +337,10 @@ function CreateTask() {
                                 <div className="summary-item">
                                     <span className="summary-label">Test Types</span>
                                     <span className="summary-value">{formData.selectedTestTypes.length} selected</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="summary-label">Target Testers</span>
+                                    <span className="summary-value">{formData.requiredTesters} testers</span>
                                 </div>
                                 <div className="summary-item">
                                     <span className="summary-label">Budget</span>

@@ -280,9 +280,10 @@ export const tasksAPI = {
                 required_testers: taskData.requiredTesters || 1,
             })
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw new Error(error.message);
+        if (!data) throw new Error('Task creation failed: Failed to verify record creation.');
 
         return { task: data };
     },
@@ -299,10 +300,56 @@ export const tasksAPI = {
             .update(updateData)
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw new Error(error.message);
+        if (!data) throw new Error('Update failed: Task not found or permission denied.');
+        
         return { task: data };
+    },
+
+    delete: async (id) => {
+        // 1. Fetch task details for notification context
+        const { data: task } = await supabase.from('tasks').select('app_name').eq('id', id).maybeSingle();
+        
+        if (task) {
+            // 2. Fetch all assigned testers
+            const { data: assignments } = await supabase
+                .from('task_testers')
+                .select('tester_id')
+                .eq('task_id', id);
+
+            if (assignments && assignments.length > 0) {
+                // 3. Notify each tester (Wrapped in fail-safe)
+                const notificationPromises = assignments.map(async (a) => {
+                    try {
+                        return await notificationsAPI.create({
+                            userId: a.tester_id,
+                            title: 'Task Cancelled',
+                            message: `The task "${task.app_name}" has been cancelled by an administrator.`,
+                            type: 'system'
+                        });
+                    } catch (err) {
+                        console.warn('Task cancellation notification failed (non-blocking):', err.message);
+                    }
+                });
+                await Promise.allSettled(notificationPromises);
+            }
+        }
+
+        // 4. Perform the actual deletion
+        const { data, error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+            throw new Error('Deletion failed: Task not found or permission denied.');
+        }
+        
+        return { success: true };
     },
 
     marketplace: async (params = {}) => {
@@ -432,7 +479,7 @@ export const tasksAPI = {
         }
 
         // Check if task is now full and update status
-        const { data: task } = await supabase.from('tasks').select('required_testers').eq('id', id).single();
+        const { data: task } = await supabase.from('tasks').select('required_testers, developer_id, app_name').eq('id', id).single();
         const { count } = await supabase.from('task_testers').select('*', { count: 'exact', head: true }).eq('task_id', id);
 
         const updates = { applied_testers: count };
@@ -441,6 +488,22 @@ export const tasksAPI = {
         }
 
         await supabase.from('tasks').update(updates).eq('id', id);
+
+        // Notify developer (Wrapped in try/catch to be non-blocking)
+        try {
+            const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+            if (task?.developer_id) {
+                await notificationsAPI.create({
+                    userId: task.developer_id,
+                    title: 'New Applicant',
+                    message: `${profile?.name || 'A tester'} has applied to your task "${task.app_name}"`,
+                    type: 'task_assigned',
+                    link: `/developer/tasks`
+                });
+            }
+        } catch (notifyError) {
+            console.warn('Notification failed (non-blocking):', notifyError.message);
+        }
 
         return { message: 'Successfully applied to task' };
     },
@@ -547,46 +610,88 @@ export const feedbackAPI = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        const taskId = feedbackData.taskId || feedbackData.task;
+
+        // 1. Check for existing feedback
+        const { data: existing } = await supabase
+            .from('feedback')
+            .select('id, status')
+            .eq('task_id', taskId)
+            .eq('tester_id', user.id)
+            .maybeSingle();
+
+        if (existing) {
+            // Only allow resubmission if it's in 'needs-revision' status
+            if (existing.status !== 'needs-revision' && existing.status !== 'rejected') {
+                throw new Error('You have already submitted feedback for this task. Please wait for the developer to review it.');
+            }
+        }
+
         const { data: profile } = await supabase
             .from('profiles')
             .select('name')
             .eq('id', user.id)
             .single();
 
-        // Get task name
-        const taskId = feedbackData.taskId || feedbackData.task;
         const { data: task } = await supabase
             .from('tasks')
-            .select('app_name')
+            .select('app_name, developer_id')
             .eq('id', taskId)
             .single();
 
-        const { data, error } = await supabase
-            .from('feedback')
-            .insert({
-                task_id: taskId,
-                task_name: task?.app_name || 'Assigned Task',
-                tester_id: user.id,
-                observations: feedbackData.observations,
-                steps_to_reproduce: feedbackData.stepsToReproduce || '',
-                proof_type: feedbackData.proofType || 'screenshot',
-                proof_url: feedbackData.proofUrl || '',
-                test_result: feedbackData.testResult || 'pass',
-                // Optional columns handled safely
-                ...(profile?.name ? { tester_name: profile.name } : {}),
-                ai_verification: 'pending',
-                credit_score: feedbackData.testResult === 'pass' ? 95 : (Math.floor(Math.random() * 40) + 60),
-            })
-            .select()
-            .single();
+        const feedbackRecord = {
+            task_id: taskId,
+            task_name: task?.app_name || 'Assigned Task',
+            tester_id: user.id,
+            observations: feedbackData.observations,
+            steps_to_reproduce: feedbackData.stepsToReproduce || '',
+            proof_type: feedbackData.proofType || 'screenshot',
+            proof_url: feedbackData.proofUrl || '',
+            test_result: feedbackData.testResult || 'pass',
+            tester_name: profile?.name || 'A tester',
+            ai_verification: 'pending',
+            status: 'pending', // Reset status to pending on (re)submission
+            credit_score: feedbackData.testResult === 'pass' ? 95 : (Math.floor(Math.random() * 40) + 60),
+        };
 
-        if (error) throw new Error(error.message);
+        let result;
+        if (existing) {
+            // UPDATE existing feedback
+            const { data, error } = await supabase
+                .from('feedback')
+                .update(feedbackRecord)
+                .eq('id', existing.id)
+                .select()
+                .single();
+            if (error) throw new Error(error.message);
+            result = data;
+        } else {
+            // INSERT new feedback
+            const { data, error } = await supabase
+                .from('feedback')
+                .insert(feedbackRecord)
+                .select()
+                .single();
+            if (error) throw new Error(error.message);
+            result = data;
+        }
 
-        // Update task status - if needed. For now we keep it simple, 
-        // but arguably it should only change if task is fully completed.
-        // await supabase.from('tasks').update({ status: 'pending-review', progress: 100 }).eq('id', taskId);
+        // Notify developer (Wrapped in try/catch to be non-blocking)
+        try {
+            if (task?.developer_id) {
+                await notificationsAPI.create({
+                    userId: task.developer_id,
+                    title: existing ? 'Feedback Updated' : 'New Feedback Submitted',
+                    message: `${profile?.name || 'A tester'} ${existing ? 'updated' : 'submitted'} feedback for "${task.app_name}"`,
+                    type: 'feedback_received',
+                    link: `/developer/feedback`
+                });
+            }
+        } catch (notifyError) {
+            console.warn('Notification failed (non-blocking):', notifyError.message);
+        }
 
-        return { feedback: data };
+        return { feedback: result };
     },
 
     update: async (id, updates) => {
@@ -599,16 +704,17 @@ export const feedbackAPI = {
             .update(updateData)
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw new Error(error.message);
+        if (!data) throw new Error('Feedback update failed: Record not found.');
 
         // If approved, credit the tester
         if (updates.status === 'approved') {
-            const { data: fb } = await supabase.from('feedback').select('tester_id, credit_score, task_id').eq('id', id).single();
+            const { data: fb } = await supabase.from('feedback').select('tester_id, credit_score, task_id, task_name').eq('id', id).single();
             if (fb) {
-                const creditAmount = (fb.credit_score || 0) * 3;
-                const { data: tester } = await supabase.from('profiles').select('wallet_balance, total_earnings, completed_tests').eq('id', fb.tester_id).single();
+                const creditAmount = updates.customCredits !== undefined ? updates.customCredits : (fb.credit_score || 0) * 3;
+                const { data: tester } = await supabase.from('profiles').select('wallet_balance, total_earnings, completed_tests, name').eq('id', fb.tester_id).single();
                 if (tester) {
                     await supabase.from('profiles').update({
                         wallet_balance: (tester.wallet_balance || 0) + creditAmount,
@@ -624,9 +730,22 @@ export const feedbackAPI = {
                         type: 'earning',
                         amount: creditAmount,
                         description: `Earnings for feedback approval`,
-                        taskName: updates.taskName || 'Task Feedback',
+                        taskName: updates.taskName || fb.task_name || 'Task Feedback',
                         status: 'completed'
                     });
+
+                    // Notify tester (Wrapped in try/catch to be non-blocking)
+                    try {
+                        await notificationsAPI.create({
+                            userId: fb.tester_id,
+                            title: 'Feedback Approved!',
+                            message: `Your feedback for "${fb.task_name}" was approved. You earned ${creditAmount} credits.`,
+                            type: 'payment_processed',
+                            link: `/tester/wallet`
+                        });
+                    } catch (notifyError) {
+                        console.warn('Feedback approval notification failed (non-blocking):', notifyError.message);
+                    }
                 }
 
                 // Check if all feedback approved → mark task completed
@@ -637,9 +756,22 @@ export const feedbackAPI = {
             }
         } else if (updates.status === 'needs-revision') {
             // Revert task status to in-progress if it was under review
-            const { data: fb } = await supabase.from('feedback').select('task_id').eq('id', id).single();
+            const { data: fb } = await supabase.from('feedback').select('task_id, task_name, tester_id').eq('id', id).single();
             if (fb) {
                 await supabase.from('tasks').update({ status: 'in-progress' }).eq('id', fb.task_id);
+                
+                // Notify tester (Wrapped in try/catch to be non-blocking)
+                try {
+                    await notificationsAPI.create({
+                        userId: fb.tester_id,
+                        title: 'Revision Requested',
+                        message: `Your feedback for "${fb.task_name}" needs revision. Please check developer comments.`,
+                        type: 'feedback_received',
+                        link: `/tester/status`
+                    });
+                } catch (notifyError) {
+                    console.warn('Revision request notification failed (non-blocking):', notifyError.message);
+                }
             }
         }
 
@@ -710,10 +842,27 @@ export const usersAPI = {
             .update(updateData)
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw new Error(error.message);
+        if (!data) throw new Error('Update failed: User not found or permission denied.');
+        
         return { user: data };
+    },
+
+    delete: async (id) => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+            throw new Error('Deletion failed: User not found or permission denied.');
+        }
+        
+        return { success: true };
     },
 
     stats: async () => {
@@ -870,6 +1019,75 @@ export const analyticsAPI = {
     },
 };
 
+// ============ Notifications API ============
+export const notificationsAPI = {
+    list: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw new Error(error.message);
+
+        return { 
+            notifications: (data || []).map(n => ({
+                id: n.id,
+                title: n.title,
+                message: n.message,
+                type: n.type,
+                unread: !n.is_read,
+                time: n.created_at,
+                link: n.link
+            }))
+        };
+    },
+
+    markAsRead: async (id) => {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('id', id);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
+    markAllAsRead: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
+    create: async ({ userId, title, message, type, link }) => {
+        const { data, error } = await supabase
+            .from('notifications')
+            .insert({
+                user_id: userId,
+                title,
+                message,
+                type,
+                link
+            })
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+        return { notification: data };
+    }
+};
+
 export default {
     auth: authAPI,
     tasks: tasksAPI,
@@ -877,4 +1095,5 @@ export default {
     users: usersAPI,
     transactions: transactionsAPI,
     analytics: analyticsAPI,
+    notifications: notificationsAPI,
 };

@@ -320,6 +320,12 @@ function SubmitFeedback() {
                             <span className="info-label">Reward</span>
                             <span className="info-value reward">{task.credits} Credits</span>
                         </div>
+                        <div className="info-item" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span className="info-label">App URL</span>
+                            <a href={task.appUrl} target="_blank" rel="noopener noreferrer" className="app-link-sidebar">
+                                {task.appUrl}
+                            </a>
+                        </div>
                     </div>
 
                     <div className="card tips-card">
