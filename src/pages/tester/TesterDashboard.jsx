@@ -26,8 +26,10 @@ function TesterDashboard() {
                     tasksAPI.marketplace(),
                 ]);
                 setStats(statsRes);
-                setActiveTasks(myTasksRes.tasks || []);
+                const tasks = (myTasksRes.tasks || []);
+                setActiveTasks(tasks.filter(t => !t.hasSubmitted));
                 setMarketplaceTasks(marketRes.tasks || []);
+
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
             } finally {
@@ -152,11 +154,15 @@ function TesterDashboard() {
                                             </div>
                                             <div className="task-action">
                                                 <Link to={`/tester/submit/${task._id || task.id}`}>
-                                                    <Button variant="primary" size="sm">
-                                                        Submit Work
+                                                    <Button 
+                                                        variant={task.submissionStatus === 'needs-revision' ? 'warning' : 'primary'} 
+                                                        size="sm"
+                                                    >
+                                                        {task.submissionStatus === 'needs-revision' ? 'Revise Submission' : 'Submit Work'}
                                                     </Button>
                                                 </Link>
                                             </div>
+
                                         </div>
                                     );
                                 })}

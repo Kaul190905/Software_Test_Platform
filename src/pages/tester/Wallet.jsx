@@ -15,7 +15,9 @@ function Wallet() {
     useEffect(() => {
         async function fetchWallet() {
             try {
+                console.log('Loading wallet data...');
                 const res = await transactionsAPI.wallet();
+                console.log('Wallet data received:', res);
                 setWalletData(res);
             } catch (err) {
                 console.error('Failed to load wallet:', err);
@@ -26,9 +28,31 @@ function Wallet() {
         fetchWallet();
     }, []);
 
-    if (loading || !walletData) return <Loader />;
+    if (loading) return <Loader />;
+    if (!walletData) return <div className="error-state">Failed to load wallet data. Please try again.</div>;
 
-    const { walletBalance = 0, pendingCredits = 0, totalEarnings = 0, recentTransactions = [] } = walletData;
+    const { 
+        walletBalance = user?.wallet_balance || 0, 
+        availableCredits = user?.wallet_balance || 0, 
+        pendingCredits = user?.pending_credits || 0, 
+        totalEarnings = user?.total_earnings || 0, 
+        recentTransactions = [] 
+    } = walletData || {};
+
+    // Prioritize user profile data if walletData doesn't have it (or if it's 0)
+    const displayBalance = (walletData?.walletBalance !== undefined && walletData?.walletBalance !== 0) 
+        ? walletData.walletBalance 
+        : (user?.wallet_balance || 0);
+
+    const displayPending = (walletData?.pendingCredits !== undefined && walletData?.pendingCredits !== 0)
+        ? walletData.pendingCredits
+        : (user?.pending_credits || 0);
+
+    const displayEarnings = (walletData?.totalEarnings !== undefined && walletData?.totalEarnings !== 0)
+        ? walletData.totalEarnings
+        : (user?.total_earnings || 0);
+
+
 
     return (
         <div className="wallet-page">
@@ -49,8 +73,8 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Available Balance</span>
-                        <h2 className="stat-value">{walletBalance} Credits</h2>
-                        <span className="stat-subtext">≈ ₹{walletBalance * 10}</span>
+                        <h2 className="stat-value">{displayBalance} Credits</h2>
+                        <span className="stat-subtext">≈ ₹{displayBalance * 10}</span>
                     </div>
                 </div>
 
@@ -60,7 +84,7 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Total Earnings</span>
-                        <h2 className="stat-value">{totalEarnings} Credits</h2>
+                        <h2 className="stat-value">{displayEarnings} Credits</h2>
                         <span className="stat-subtext">+12% from last month</span>
                     </div>
                 </div>
@@ -71,7 +95,7 @@ function Wallet() {
                     </div>
                     <div className="stat-content">
                         <span className="stat-label">Pending Credits</span>
-                        <h2 className="stat-value">{pendingCredits} Credits</h2>
+                        <h2 className="stat-value">{displayPending} Credits</h2>
                         <span className="stat-subtext">Under verification</span>
                     </div>
                 </div>

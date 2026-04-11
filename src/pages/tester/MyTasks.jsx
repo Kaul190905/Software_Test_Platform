@@ -29,51 +29,66 @@ function MyTasks() {
     }, []);
 
     const activeTasks = tasks.filter(t =>
-        ['open', 'in-progress', 'pending-review', 'under-verification'].includes(t.status)
+        ['open', 'in-progress', 'pending-review', 'under-verification'].includes(t.status) && !t.hasSubmitted
     );
     const completedTasks = tasks.filter(t =>
-        ['completed', 'rejected'].includes(t.status)
+        ['completed', 'rejected'].includes(t.status) || (t.status === 'approved' || t.submissionStatus === 'approved')
     );
+
 
     const displayedTasks = activeTab === 'active' ? activeTasks : completedTasks;
 
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (task) => {
+        if (task.submissionStatus === 'approved') {
+            return <Badge variant="success">Completed</Badge>;
+        }
+        if (task.submissionStatus === 'rejected' || task.status === 'rejected') {
+            return <Badge variant="danger">Rejected</Badge>;
+        }
+
         const statusMap = {
             'open': { label: 'Accepted', variant: 'info' },
             'in-progress': { label: 'In Progress', variant: 'primary' },
             'pending-review': { label: 'Pending Review', variant: 'warning' },
             'under-verification': { label: 'Under Verification', variant: 'warning' },
             'completed': { label: 'Completed', variant: 'success' },
-            'rejected': { label: 'Rejected', variant: 'danger' },
         };
-        const config = statusMap[status] || { label: status, variant: 'secondary' };
+        const config = statusMap[task.status] || { label: task.status, variant: 'secondary' };
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
 
     const getActionButton = (task) => {
+        if (task.submissionStatus === 'approved' || task.status === 'completed') {
+            return (
+                <div className="completed-info">
+                    <FiCheckCircle size={16} style={{ color: 'var(--accent-success)' }} />
+                    <span>Credits Earned: {formatCredits(task.credits || task.budget || 0)}</span>
+                </div>
+            );
+        }
+
         switch (task.status) {
             case 'open':
             case 'in-progress':
                 return (
                     <Link to={`/tester/submit/${task._id || task.taskId || task.id}`}>
-                        <Button variant="primary" fullWidth icon={<FiArrowRight />} iconPosition="right">
-                            Continue Testing
+                        <Button 
+                            variant={task.submissionStatus === 'needs-revision' ? 'warning' : 'primary'} 
+                            fullWidth 
+                            icon={<FiArrowRight />} 
+                            iconPosition="right"
+                        >
+                            {task.submissionStatus === 'needs-revision' ? 'Revise Submission' : 'Continue Testing'}
                         </Button>
                     </Link>
                 );
+
             case 'pending-review':
             case 'under-verification':
                 return (
                     <Button variant="secondary" fullWidth disabled>
                         Awaiting Review
                     </Button>
-                );
-            case 'completed':
-                return (
-                    <div className="completed-info">
-                        <FiCheckCircle size={16} style={{ color: 'var(--accent-success)' }} />
-                        <span>Credits Earned: {formatCredits(task.credits || task.budget || 0)}</span>
-                    </div>
                 );
             case 'rejected':
                 return (
@@ -91,6 +106,7 @@ function MyTasks() {
                 );
         }
     };
+
 
     return (
         <div className="my-tasks-page">

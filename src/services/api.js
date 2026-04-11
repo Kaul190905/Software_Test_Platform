@@ -432,7 +432,15 @@ export const tasksAPI = {
 
         const { data: assignments, error } = await supabase
             .from('task_testers')
-            .select('task_id, created_at, tasks(*, profiles!tasks_developer_id_fkey(name, company))')
+            .select(`
+                task_id, 
+                created_at, 
+                tasks(
+                    *, 
+                    profiles!tasks_developer_id_fkey(name, company),
+                    feedback(status, tester_id)
+                )
+            `)
             .eq('tester_id', user.id);
 
         if (error) throw new Error(error.message);
@@ -441,6 +449,17 @@ export const tasksAPI = {
             const task = a.tasks;
             if (!task) return null;
             const dev = task.profiles || {};
+            
+            // Find feedback submitted by THIS tester for THIS task
+            const userFeedback = (task.feedback || []).find(f => f.tester_id === user.id);
+            const submissionStatus = userFeedback?.status || null;
+            
+            // A task is considered "submitted" if feedback exists and is not pending revision/rejected
+            // which would mean the tester still needs to act on it.
+            const hasSubmitted = !!(submissionStatus && 
+                                submissionStatus !== 'needs-revision' && 
+                                submissionStatus !== 'rejected');
+
             return {
                 _id: task.id,
                 id: task.id,
@@ -458,8 +477,11 @@ export const tasksAPI = {
                 company: task.developer_company || dev.company || '',
                 acceptedAt: a.created_at,
                 createdAt: task.created_at,
+                hasSubmitted,
+                submissionStatus
             };
         }).filter(Boolean);
+
 
         return { tasks };
     },
@@ -727,7 +749,7 @@ export const feedbackAPI = {
                         userId: fb.tester_id,
                         userName: tester.name,
                         userType: 'tester',
-                        type: 'earning',
+                        type: 'credit',
                         amount: creditAmount,
                         description: `Earnings for feedback approval`,
                         taskName: updates.taskName || fb.task_name || 'Task Feedback',
@@ -916,18 +938,28 @@ export const transactionsAPI = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('wallet_balance, pending_credits, total_earnings')
+            .select('*')
             .eq('id', user.id)
             .single();
 
-        const { data: txData } = await supabase
+        if (profileError) {
+            console.error('Wallet profile fetch error:', profileError);
+            throw new Error(profileError.message);
+        }
+
+        const { data: txData, error: txError } = await supabase
             .from('transactions')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(20);
+
+        if (txError) {
+            console.error('Wallet transactions fetch error:', txError);
+        }
+
 
         const transactions = (txData || []).map(t => ({
             id: t.id,
@@ -940,11 +972,13 @@ export const transactionsAPI = {
         }));
 
         return {
-            balance: profile?.wallet_balance || 0,
+            walletBalance: profile?.wallet_balance || 0,
+            availableCredits: profile?.wallet_balance || 0,
             pendingCredits: profile?.pending_credits || 0,
             totalEarnings: profile?.total_earnings || 0,
-            transactions,
+            recentTransactions: transactions,
         };
+
     },
 
     record: async (txData) => {
