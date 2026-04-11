@@ -12,12 +12,6 @@ function AuthLayout() {
         return <Loader fullScreen text="Loading..." />;
     }
 
-    if (isAuthenticated && user) {
-        // Redirect to appropriate dashboard based on role
-        const dashboardPath = `/${user.role}/dashboard`;
-        return <Navigate to={dashboardPath} replace />;
-    }
-
     return (
         <div className="auth-split-layout">
             <div className="auth-brand-panel">

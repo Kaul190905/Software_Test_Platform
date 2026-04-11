@@ -18,6 +18,10 @@ function DashboardLayout() {
         return <Navigate to="/login" replace />;
     }
 
+    if (user.status === 'pending' && user.role !== 'admin') {
+        return <Navigate to="/pending-approval" replace />;
+    }
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };

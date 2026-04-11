@@ -123,4 +123,4 @@ export function useNotifications() {
     return context;
 }
 
-export default NotificationContext;
+// No default export to avoid Vite HMR conflicts with multiple component exports

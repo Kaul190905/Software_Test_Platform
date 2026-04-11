@@ -52,7 +52,11 @@ function Login() {
         setIsLoading(true);
         try {
             const userData = await login(formData.email, formData.password);
-            navigate(`/${userData.role}/dashboard`);
+            if (userData.status === 'pending' && userData.role !== 'admin') {
+                navigate('/pending-approval');
+            } else {
+                navigate(`/${userData.role}/dashboard`);
+            }
         } catch (error) {
             setErrors({ submit: 'Invalid credentials. Please try again.' });
         } finally {

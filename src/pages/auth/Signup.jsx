@@ -87,9 +87,7 @@ function Signup() {
                 signupData.role = 'admin';
             }
             await signup(signupData);
-            // Store signup data for OTP verification
-            sessionStorage.setItem('signupData', JSON.stringify(signupData));
-            navigate('/verify-otp');
+            navigate('/pending-approval');
         } catch (error) {
             setErrors({ submit: 'Registration failed. Please try again.' });
         } finally {

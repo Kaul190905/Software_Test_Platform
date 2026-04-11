@@ -148,8 +148,11 @@ export function AuthProvider({ children }) {
 
             if (profile.status === 'suspended') {
                 await supabase.auth.signOut();
-                throw new Error('Account suspended');
+                throw new Error('Your account has been suspended. Please contact support.');
             }
+
+            // We allow login for 'pending' status users so they can see the Pending Approval page
+            // The redirection logic will be handled in Login.jsx or DashboardLayout.jsx
 
             setUser(profile);
             setIsAuthenticated(true);
@@ -185,11 +188,14 @@ export function AuthProvider({ children }) {
 
             const profile = await fetchProfile(data.user);
             if (profile) {
-                // Update profile with company if provided
-                if (userData.company) {
-                    await supabase.from('profiles').update({ company: userData.company }).eq('id', data.user.id);
-                    profile.company = userData.company;
-                }
+                // Update profile with company if provided and ensure status is pending
+                const updates = { status: 'pending' };
+                if (userData.company) updates.company = userData.company;
+                
+                await supabase.from('profiles').update(updates).eq('id', data.user.id);
+                profile.status = 'pending';
+                if (userData.company) profile.company = userData.company;
+                
                 setUser(profile);
             }
 
@@ -199,45 +205,6 @@ export function AuthProvider({ children }) {
         } finally {
             setIsLoading(false);
             loginInProgressRef.current = false;
-        }
-    };
-
-    const verifyOTP = async (otp, email) => {
-        setIsLoading(true);
-        try {
-            const targetEmail = email || user?.email;
-            if (!targetEmail) throw new Error('Email is required for verification');
-
-            const { data, error } = await supabase.auth.verifyOtp({
-                email: targetEmail,
-                token: otp,
-                type: 'signup',
-            });
-
-            if (error) throw new Error(error.message);
-
-            // Update profile status after successful OTP verification
-            const profileId = data.user?.id || user?.id;
-            if (profileId) {
-                await supabase
-                    .from('profiles')
-                    .update({ otp_verified: true, status: 'active' })
-                    .eq('id', profileId);
-
-                // Fetch full profile to refresh state
-                const profile = await fetchProfile(data.user || user);
-                if (profile) {
-                    setUser(profile);
-                    setIsAuthenticated(true);
-                }
-            }
-
-            return true;
-        } catch (err) {
-            console.error('OTP Verification Error:', err.message);
-            throw err;
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -262,7 +229,6 @@ export function AuthProvider({ children }) {
         isAuthenticated,
         login,
         signup,
-        verifyOTP,
         logout,
         updateUser,
     };
@@ -282,4 +248,4 @@ export function useAuth() {
     return context;
 }
 
-export default AuthContext;
+// No default export to avoid Vite HMR conflicts with multiple component exports

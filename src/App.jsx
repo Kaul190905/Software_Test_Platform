@@ -13,7 +13,7 @@ import AuthLayout from './layouts/AuthLayout';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
-import OTPVerification from './pages/auth/OTPVerification';
+import PendingApproval from './pages/auth/PendingApproval';
 
 // Developer Pages
 import DeveloperDashboard from './pages/developer/DeveloperDashboard';
@@ -50,7 +50,7 @@ function App() {
                         <Route element={<AuthLayout />}>
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
-                            <Route path="/verify-otp" element={<OTPVerification />} />
+                            <Route path="/pending-approval" element={<PendingApproval />} />
                         </Route>
 
                         {/* Developer Routes */}
