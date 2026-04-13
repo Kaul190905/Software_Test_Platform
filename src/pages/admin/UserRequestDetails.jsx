@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { usersAPI } from '../../services/api';
+import { usersAPI, notificationsAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -52,6 +52,16 @@ function UserRequestDetails() {
         setIsProcessing(true);
         try {
             await usersAPI.update(user.id, { status: 'active' });
+            
+            // Create notification for the user
+            await notificationsAPI.create({
+                userId: user.id,
+                title: 'Application Approved! 🎉',
+                message: 'Welcome to ProEduvate! Your enrollment request has been approved. You now have full access to the platform.',
+                type: 'success',
+                link: '/dashboard'
+            });
+
             toast.success(
                 'User Approved',
                 `An enrollment email has been sent to ${user.email}.`
@@ -67,6 +77,15 @@ function UserRequestDetails() {
     const handleReject = async () => {
         try {
             await usersAPI.update(user.id, { status: 'inactive' });
+            
+            // Create notification for the user
+            await notificationsAPI.create({
+                userId: user.id,
+                title: 'Application Update',
+                message: 'Thank you for your interest in ProEduvate. Unfortunately, your application could not be approved at this time.',
+                type: 'warning'
+            });
+
             toast.error('Application Rejected', `The request from ${user.name} has been declined.`);
             navigate('/admin/requests');
         } catch (err) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { tasksAPI, feedbackAPI } from '../../services/api';
+import { tasksAPI, feedbackAPI, notificationsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 import { FiUpload, FiCheckCircle, FiInfo, FiVideo, FiImage } from 'react-icons/fi';
 import './SubmitProof.css';
@@ -40,6 +40,21 @@ function SubmitProof() {
                 testResult: formData.issuesFound === 'none' ? 'pass' : formData.issuesFound === 'minor' ? 'issues-found' : 'fail',
                 proofUrl: 'uploaded-proof',
             });
+
+            // Notify the Developer
+            if (task && (task.developer_id || task.user_id)) {
+                try {
+                    await notificationsAPI.create({
+                        userId: task.developer_id || task.user_id,
+                        title: 'New Proof Submitted 📤',
+                        message: `A tester has submitted proof for your task: ${task.appName || 'Task'}`,
+                        type: 'info',
+                        link: `/developer/feedback`
+                    });
+                } catch (nError) {
+                    console.error('Failed to notify developer:', nError);
+                }
+            }
             setIsLoading(false);
             navigate('/tester/status');
         } catch (err) {

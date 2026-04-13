@@ -787,18 +787,47 @@ export const feedbackAPI = {
             const { data: fb } = await supabase.from('feedback').select('task_id, task_name, tester_id').eq('id', id).single();
             if (fb) {
                 await supabase.from('tasks').update({ status: 'in-progress' }).eq('id', fb.task_id);
-                
                 // Notify tester (Wrapped in try/catch to be non-blocking)
                 try {
                     await notificationsAPI.create({
                         userId: fb.tester_id,
-                        title: 'Revision Requested',
+                        title: 'Revision Requested 📝',
                         message: `Your feedback for "${fb.task_name}" needs revision. Please check developer comments.`,
-                        type: 'feedback_received',
+                        type: 'warning',
                         link: `/tester/status`
                     });
                 } catch (notifyError) {
                     console.warn('Revision request notification failed (non-blocking):', notifyError.message);
+                }
+            }
+        } else if (updates.status === 'dev-approved') {
+            const { data: fb } = await supabase.from('feedback').select('task_name, tester_id').eq('id', id).single();
+            if (fb) {
+                try {
+                    await notificationsAPI.create({
+                        userId: fb.tester_id,
+                        title: 'Proof Verified! ✅',
+                        message: `The developer has verified your proof for "${fb.task_name}". It is now in the queue for final credit release.`,
+                        type: 'info',
+                        link: `/tester/status`
+                    });
+                } catch (nError) {
+                    console.error('Failed to notify tester of dev-approval:', nError);
+                }
+            }
+        } else if (updates.status === 'rejected') {
+            const { data: fb } = await supabase.from('feedback').select('task_name, tester_id').eq('id', id).single();
+            if (fb) {
+                try {
+                    await notificationsAPI.create({
+                        userId: fb.tester_id,
+                        title: 'Submission Rejected ❌',
+                        message: `Unfortunately, your submission for "${fb.task_name}" was rejected during final verification.`,
+                        type: 'error',
+                        link: `/tester/status`
+                    });
+                } catch (nError) {
+                    console.error('Failed to notify tester of rejection:', nError);
                 }
             }
         }
@@ -1071,6 +1100,20 @@ export const transactionsAPI = {
             .single();
 
         if (error) throw new Error(error.message);
+
+        // Create notification for the user
+        try {
+            await notificationsAPI.create({
+                userId: targetUserId,
+                title: txData.type === 'payment' ? 'Payment Received 💰' : 'Account Update',
+                message: txData.description || `A transaction of ${txData.amount} credits has been recorded.`,
+                type: 'success',
+                link: '/wallet'
+            });
+        } catch (nError) {
+            console.error('Failed to create transaction notification:', nError);
+        }
+
         return { transaction: data };
     },
 };
