@@ -116,9 +116,25 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                     {isProfileOpen && (
                         <div className="navbar-profile-dropdown">
                             <div className="dropdown-header">
-                                <p className="dropdown-user-name">{user?.name}</p>
+                                <Link to={`/${user?.role}/profile`} className="dropdown-user-link" onClick={() => setIsProfileOpen(false)}>
+                                    <div className="dropdown-avatar">
+                                        {user?.avatar_url ? (
+                                            <img src={user.avatar_url} alt={user.name} />
+                                        ) : (
+                                            getInitials(user?.name || 'U')
+                                        )}
+                                    </div>
+                                    <div className="dropdown-user-info">
+                                        <p className="dropdown-user-name">{user?.name}</p>
+                                        <p className="dropdown-view-profile">View Profile</p>
+                                    </div>
+                                </Link>
                             </div>
                             <div className="dropdown-divider" />
+                            <Link to={`/${user?.role}/profile`} className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                                <FiUser size={16} />
+                                <span>My Profile</span>
+                            </Link>
                             <button className="dropdown-item logout" onClick={handleLogout}>
                                 <FiLogOut size={16} />
                                 <span>Sign Out</span>

@@ -20,7 +20,8 @@ import {
     FiTrendingUp,
     FiZap,
     FiLogOut,
-    FiHelpCircle
+    FiHelpCircle,
+    FiUser
 } from 'react-icons/fi';
 import './Sidebar.css';
 

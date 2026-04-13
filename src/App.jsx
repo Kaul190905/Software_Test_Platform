@@ -40,6 +40,7 @@ import Verification from './pages/admin/Verification';
 import UserRequests from './pages/admin/UserRequests';
 import UserRequestDetails from './pages/admin/UserRequestDetails';
 import SupportTickets from './pages/admin/SupportTickets';
+import Profile from './pages/profile/Profile';
 
 function App() {
     return (
@@ -62,6 +63,7 @@ function App() {
                             <Route path="feedback" element={<FeedbackReview />} />
                             <Route path="payments" element={<Payment />} />
                             <Route path="reports" element={<Reports />} />
+                            <Route path="profile" element={<Profile />} />
                             <Route index element={<Navigate to="dashboard" replace />} />
                         </Route>
 
@@ -75,6 +77,7 @@ function App() {
                             <Route path="submit/:taskId" element={<SubmitFeedback />} />
                             <Route path="wallet" element={<Wallet />} />
                             <Route path="status" element={<Status />} />
+                            <Route path="profile" element={<Profile />} />
                             <Route index element={<Navigate to="dashboard" replace />} />
                         </Route>
 
@@ -89,6 +92,7 @@ function App() {
                             <Route path="verification" element={<Verification />} />
                             <Route path="support" element={<SupportTickets />} />
                             <Route path="credits" element={<AdminDashboard />} />
+                            <Route path="profile" element={<Profile />} />
                         </Route>
 
                         {/* Landing Page */}

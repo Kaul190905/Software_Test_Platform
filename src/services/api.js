@@ -44,6 +44,12 @@ export const authAPI = {
         if (profileError) throw new Error(profileError.message);
         return { user: profile };
     },
+
+    updatePassword: async (newPassword) => {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
 };
 
 // ============ Tasks API ============
@@ -858,6 +864,8 @@ export const usersAPI = {
         if (updates.role !== undefined) updateData.role = updates.role;
         if (updates.company !== undefined) updateData.company = updates.company;
         if (updates.bio !== undefined) updateData.bio = updates.bio;
+        if (updates.skills !== undefined) updateData.skills = updates.skills;
+        if (updates.experience !== undefined) updateData.experience = updates.experience;
 
         const { data, error } = await supabase
             .from('profiles')
@@ -894,6 +902,51 @@ export const usersAPI = {
         if (error) throw new Error(error.message);
         return { user: data };
     },
+};
+
+// ============ Profiles API ============
+export const profilesAPI = {
+    update: async (updates) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', user.id)
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+        return { user: data };
+    },
+
+    uploadAvatar: async (file) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) throw new Error(uploadError.message);
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        // Update profile with new avatar URL
+        await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('id', user.id);
+
+        return { publicUrl };
+    }
 };
 
 // ============ Transactions API ============
@@ -1195,4 +1248,5 @@ export default {
     analytics: analyticsAPI,
     notifications: notificationsAPI,
     support: supportAPI,
+    profiles: profilesAPI,
 };
