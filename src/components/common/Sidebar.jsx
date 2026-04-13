@@ -1,5 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import HelpModal from './HelpModal';
 import {
     FiHome,
     FiPlus,
@@ -17,7 +19,8 @@ import {
     FiShield,
     FiTrendingUp,
     FiZap,
-    FiLogOut
+    FiLogOut,
+    FiHelpCircle
 } from 'react-icons/fi';
 import './Sidebar.css';
 
@@ -25,6 +28,7 @@ function Sidebar({ isOpen, onClose }) {
     const { user, logout } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -52,6 +56,7 @@ function Sidebar({ isOpen, onClose }) {
         { path: '/admin/requests', icon: FiZap, label: 'User Requests' },
         { path: '/admin/tasks', icon: FiActivity, label: 'Tasks' },
         { path: '/admin/verification', icon: FiShield, label: 'Verification' },
+        { path: '/admin/support', icon: FiHelpCircle, label: 'Support Tickets' },
     ];
 
     const getLinks = () => {
@@ -112,13 +117,15 @@ function Sidebar({ isOpen, onClose }) {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="sidebar-help">
-                        <div className="help-icon">?</div>
-                        <div className="help-content">
-                            <p className="help-title">Need help?</p>
-                            <p className="help-text">Check our documentation</p>
+                    {user?.role !== 'admin' && (
+                        <div className="sidebar-help" onClick={() => setIsHelpModalOpen(true)} style={{ cursor: 'pointer' }}>
+                            <div className="help-icon">?</div>
+                            <div className="help-content">
+                                <p className="help-title">Need help?</p>
+                                <p className="help-text">Contact administrator</p>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <button className="sidebar-logout-btn" onClick={handleLogout}>
                         <FiLogOut size={18} />
@@ -126,6 +133,11 @@ function Sidebar({ isOpen, onClose }) {
                     </button>
                 </div>
             </aside>
+
+            <HelpModal 
+                isOpen={isHelpModalOpen} 
+                onClose={() => setIsHelpModalOpen(false)} 
+            />
         </>
     );
 }

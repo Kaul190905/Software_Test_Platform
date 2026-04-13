@@ -1122,6 +1122,70 @@ export const notificationsAPI = {
     }
 };
 
+// ============ Support API ============
+export const supportAPI = {
+    createTicket: async (ticketData) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('support_tickets')
+            .insert({
+                user_id: user.id,
+                subject: ticketData.subject,
+                message: ticketData.message,
+                category: ticketData.category || 'general',
+                status: 'open'
+            })
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+        return { ticket: data };
+    },
+
+    listUserTickets: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('support_tickets')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw new Error(error.message);
+        return { tickets: data };
+    },
+
+    adminListTickets: async (status = 'all') => {
+        let query = supabase
+            .from('support_tickets')
+            .select('*, profiles(name, email)');
+        
+        if (status !== 'all') {
+            query = query.eq('status', status);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+        if (error) throw new Error(error.message);
+
+        return { tickets: data };
+    },
+
+    updateTicket: async (id, updates) => {
+        const { data, error } = await supabase
+            .from('support_tickets')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw new Error(error.message);
+        return { ticket: data };
+    }
+};
+
 export default {
     auth: authAPI,
     tasks: tasksAPI,
@@ -1130,4 +1194,5 @@ export default {
     transactions: transactionsAPI,
     analytics: analyticsAPI,
     notifications: notificationsAPI,
+    support: supportAPI,
 };

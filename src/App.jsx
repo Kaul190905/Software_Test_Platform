@@ -39,6 +39,7 @@ import AdminTasks from './pages/admin/AdminTasks';
 import Verification from './pages/admin/Verification';
 import UserRequests from './pages/admin/UserRequests';
 import UserRequestDetails from './pages/admin/UserRequestDetails';
+import SupportTickets from './pages/admin/SupportTickets';
 
 function App() {
     return (
@@ -86,6 +87,7 @@ function App() {
                             <Route path="users" element={<UserManagement />} />
                             <Route path="tasks" element={<AdminTasks />} />
                             <Route path="verification" element={<Verification />} />
+                            <Route path="support" element={<SupportTickets />} />
                             <Route path="credits" element={<AdminDashboard />} />
                         </Route>
 
