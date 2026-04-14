@@ -811,8 +811,16 @@ export const feedbackAPI = {
                         type: 'info',
                         link: `/tester/status`
                     });
+
+                    // Notify all admins about pending verification
+                    await notificationsAPI.notifyAdmins({
+                        title: 'Pending Verification ⚖️',
+                        message: `A developer has verified proof for "${fb.task_name}". Final credit release requires admin approval.`,
+                        type: 'warning',
+                        link: '/admin/verification'
+                    });
                 } catch (nError) {
-                    console.error('Failed to notify tester of dev-approval:', nError);
+                    console.error('Failed to notify tester or admins of dev-approval:', nError);
                 }
             }
         } else if (updates.status === 'rejected') {
@@ -1108,7 +1116,7 @@ export const transactionsAPI = {
                 title: txData.type === 'payment' ? 'Payment Received 💰' : 'Account Update',
                 message: txData.description || `A transaction of ${txData.amount} credits has been recorded.`,
                 type: 'success',
-                link: '/wallet'
+                link: targetUserType === 'tester' ? '/tester/wallet' : targetUserType === 'developer' ? '/developer/payments' : '/admin/dashboard'
             });
         } catch (nError) {
             console.error('Failed to create transaction notification:', nError);
@@ -1215,6 +1223,36 @@ export const notificationsAPI = {
 
         if (error) throw new Error(error.message);
         return { notification: data };
+    },
+
+    notifyAdmins: async ({ title, message, type, link }) => {
+        try {
+            const { data: admins, error } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin');
+            
+            if (error) throw error;
+            if (!admins || admins.length === 0) return { success: false, message: 'No admins found' };
+
+            const notifications = admins.map(admin => ({
+                user_id: admin.id,
+                title,
+                message,
+                type: type || 'system',
+                link: link || '/admin/dashboard'
+            }));
+
+            const { error: insertError } = await supabase
+                .from('notifications')
+                .insert(notifications);
+
+            if (insertError) throw insertError;
+            return { success: true };
+        } catch (err) {
+            console.error('Error in notifyAdmins:', err.message);
+            return { success: false, error: err.message };
+        }
     }
 };
 
@@ -1237,6 +1275,20 @@ export const supportAPI = {
             .single();
 
         if (error) throw new Error(error.message);
+
+        // Notify all admins about new support ticket
+        try {
+            const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+            await notificationsAPI.notifyAdmins({
+                title: 'New Support Ticket 🎟️',
+                message: `${profile?.name || 'A user'} has submitted a new support ticket: "${ticketData.subject}"`,
+                type: 'info',
+                link: '/admin/support'
+            });
+        } catch (nError) {
+            console.error('Failed to notify admins of new support ticket:', nError);
+        }
+
         return { ticket: data };
     },
 

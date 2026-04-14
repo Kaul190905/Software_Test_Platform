@@ -38,6 +38,7 @@ function Sidebar({ isOpen, onClose }) {
 
     const developerLinks = [
         { path: '/developer/dashboard', icon: FiHome, label: 'Dashboard' },
+        { path: '/developer/tasks', icon: FiClipboard, label: 'My Tasks' },
         { path: '/developer/create-task', icon: FiPlus, label: 'Create Task' },
         { path: '/developer/feedback', icon: FiMessageSquare, label: 'Feedback' },
         { path: '/developer/reports', icon: FiFileText, label: 'Reports' },

@@ -6,7 +6,8 @@ import { getDeadlineStatus, formatCurrency } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
-import { FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEye } from 'react-icons/fi';
+import Modal from '../../components/common/Modal';
+import { FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEye, FiExternalLink, FiMessageCircle, FiEdit2, FiTrash2, FiClipboard } from 'react-icons/fi';
 import './Tasks.css';
 
 function Tasks() {
@@ -15,6 +16,9 @@ function Tasks() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('active');
+    const [showDropdown, setShowDropdown] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewingTask, setViewingTask] = useState(null);
 
     useEffect(() => {
         async function fetchTasks() {
@@ -158,12 +162,55 @@ function Tasks() {
                                         </td>
                                         <td>
                                             <div className="action-btns">
-                                                <button className="icon-btn" title="View Details">
+                                                <button 
+                                                    className="icon-btn" 
+                                                    title="View Details"
+                                                    onClick={() => {
+                                                        setViewingTask(task);
+                                                        setIsViewModalOpen(true);
+                                                    }}
+                                                >
                                                     <FiEye />
                                                 </button>
-                                                <button className="icon-btn" title="More Options">
-                                                    <FiMoreVertical />
-                                                </button>
+                                                <div className="more-actions-container">
+                                                    <button 
+                                                        className={`icon-btn ${showDropdown === (task._id || task.id) ? 'active' : ''}`}
+                                                        title="More Options"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowDropdown(showDropdown === (task._id || task.id) ? null : (task._id || task.id));
+                                                        }}
+                                                    >
+                                                        <FiMoreVertical />
+                                                    </button>
+                                                    {showDropdown === (task._id || task.id) && (
+                                                        <div className="actions-dropdown">
+                                                            <button onClick={() => {
+                                                                setViewingTask(task);
+                                                                setIsViewModalOpen(true);
+                                                                setShowDropdown(null);
+                                                            }}>
+                                                                <FiEye size={14} /> View Details
+                                                            </button>
+                                                            <Link to={`/developer/feedback?taskId=${task._id || task.id}`} style={{ textDecoration: 'none' }}>
+                                                                <button>
+                                                                    <FiMessageCircle size={14} /> View Feedback
+                                                                </button>
+                                                            </Link>
+                                                            {task.status === 'open' && (
+                                                                <button onClick={() => {
+                                                                    // Navigate to edit or open edit modal
+                                                                    setShowDropdown(null);
+                                                                }}>
+                                                                    <FiEdit2 size={14} /> Edit Task
+                                                                </button>
+                                                            )}
+                                                            <button className="danger" onClick={() => setShowDropdown(null)}>
+                                                                <FiTrash2 size={14} /> Delete Task
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
@@ -173,6 +220,72 @@ function Tasks() {
                     </table>
                 </div>
             </div>
+
+            {/* View Task Modal */}
+            <Modal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="Task Details"
+                size="lg"
+            >
+                {viewingTask && (
+                    <div className="task-view-details">
+                        <div className="view-section">
+                            <div className="view-section-header">
+                                <h4 className="section-title">Application Information</h4>
+                                {getStatusBadge(viewingTask.status)}
+                            </div>
+                            <div className="detail-grid">
+                                <div className="detail-item">
+                                    <span className="detail-label">App Name</span>
+                                    <span className="detail-value">{viewingTask.appName}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">App URL</span>
+                                    <a 
+                                        href={viewingTask.appUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="detail-value link"
+                                    >
+                                        {viewingTask.appUrl} <FiExternalLink size={12} />
+                                    </a>
+                                </div>
+                                <div className="detail-item full-width">
+                                    <span className="detail-label">Description</span>
+                                    <p className="detail-value description">{viewingTask.description || 'No description provided.'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="view-section">
+                            <h4 className="section-title">Testing Requirements</h4>
+                            <div className="detail-grid">
+                                <div className="detail-item">
+                                    <span className="detail-label">Testing Level</span>
+                                    <span className="detail-value capitalize">{viewingTask.testingLevel || 'Intermediate'}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Budget</span>
+                                    <span className="detail-value">{formatCurrency(viewingTask.budget)}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Testers Assigned</span>
+                                    <span className="detail-value">{viewingTask.testersAssigned || 0}</span>
+                                </div>
+                                <div className="detail-item full-width">
+                                    <span className="detail-label">Test Types Requested</span>
+                                    <div className="detail-badges">
+                                        {(viewingTask.testTypes || []).map(type => (
+                                            <span key={type} className="mini-badge">{type}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

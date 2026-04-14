@@ -28,12 +28,8 @@ function MyTasks() {
         fetchTasks();
     }, []);
 
-    const activeTasks = tasks.filter(t =>
-        ['open', 'in-progress', 'pending-review', 'under-verification'].includes(t.status) && !t.hasSubmitted
-    );
-    const completedTasks = tasks.filter(t =>
-        ['completed', 'rejected'].includes(t.status) || (t.status === 'approved' || t.submissionStatus === 'approved')
-    );
+    const activeTasks = tasks.filter(t => !t.hasSubmitted);
+    const completedTasks = tasks.filter(t => t.hasSubmitted);
 
 
     const displayedTasks = activeTab === 'active' ? activeTasks : completedTasks;

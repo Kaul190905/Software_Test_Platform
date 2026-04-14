@@ -59,7 +59,7 @@ function UserRequestDetails() {
                 title: 'Application Approved! 🎉',
                 message: 'Welcome to ProEduvate! Your enrollment request has been approved. You now have full access to the platform.',
                 type: 'success',
-                link: '/dashboard'
+                link: `/${user.role}/dashboard`
             });
 
             toast.success(

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import supabase from '../lib/supabase';
+import { notificationsAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -192,10 +193,23 @@ export function AuthProvider({ children }) {
                 const updates = { status: 'pending' };
                 if (userData.company) updates.company = userData.company;
                 
+                
                 await supabase.from('profiles').update(updates).eq('id', data.user.id);
                 profile.status = 'pending';
                 if (userData.company) profile.company = userData.company;
                 
+                // Notify all admins about new user request
+                try {
+                    await notificationsAPI.notifyAdmins({
+                        title: 'New User Request 👤',
+                        message: `${userData.name} has registered as a ${userData.role} and is pending approval.`,
+                        type: 'info',
+                        link: '/admin/requests'
+                    });
+                } catch (nError) {
+                    console.error('Failed to notify admins of new user signup:', nError);
+                }
+
                 setUser(profile);
             }
 
