@@ -13,6 +13,7 @@ import AuthLayout from './layouts/AuthLayout';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import AuthCallback from './pages/auth/AuthCallback';
 import PendingApproval from './pages/auth/PendingApproval';
 
 // Developer Pages
@@ -52,6 +53,7 @@ function App() {
                         <Route element={<AuthLayout />}>
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
+                            <Route path="/auth/callback" element={<AuthCallback />} />
                             <Route path="/pending-approval" element={<PendingApproval />} />
                         </Route>
 

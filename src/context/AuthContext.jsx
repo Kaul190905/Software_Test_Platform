@@ -142,7 +142,18 @@ export function AuthProvider({ children }) {
                 password,
             });
 
-            if (error) throw new Error(error.message);
+            if (error) {
+                if (error.message.includes('Email not confirmed')) {
+                    throw new Error('Please verify your email address. Check your inbox for a confirmation link.');
+                }
+                throw new Error(error.message);
+            }
+
+            // Check if email is confirmed in auth user (even if error didn't trigger)
+            if (!data.user.email_confirmed_at) {
+                await supabase.auth.signOut();
+                throw new Error('Please verify your email address. Check your inbox for a confirmation link.');
+            }
 
             const profile = await fetchProfile(data.user);
             if (!profile) throw new Error('Profile not found. Please contact support.');
@@ -166,6 +177,28 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const loginWithGoogle = async (role = 'tester') => {
+        loginInProgressRef.current = true;
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    data: {
+                        role: role
+                    }
+                }
+            });
+
+            if (error) throw error;
+        } catch (err) {
+            console.error('Google Login Error:', err.message);
+            throw err;
+        } finally {
+            loginInProgressRef.current = false;
+        }
+    };
+
     const signup = async (userData) => {
         loginInProgressRef.current = true;
         setIsLoading(true);
@@ -176,13 +209,19 @@ export function AuthProvider({ children }) {
                 options: {
                     data: {
                         name: userData.name,
-                        role: userData.role || 'developer',
+                        role: userData.role || 'tester',
                         company: userData.company || '',
                     },
                 },
             });
 
             if (error) throw new Error(error.message);
+
+            // If confirmation is required, the user will be created but not have a session necessarily
+            // We check if a session was returned
+            if (!data.session) {
+                return { needsVerification: true };
+            }
 
             // Wait a moment for the trigger to create the profile
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -192,7 +231,6 @@ export function AuthProvider({ children }) {
                 // Update profile with company if provided and ensure status is pending
                 const updates = { status: 'pending' };
                 if (userData.company) updates.company = userData.company;
-                
                 
                 await supabase.from('profiles').update(updates).eq('id', data.user.id);
                 profile.status = 'pending';
@@ -211,6 +249,7 @@ export function AuthProvider({ children }) {
                 }
 
                 setUser(profile);
+                setIsAuthenticated(true);
             }
 
             return profile || { ...data.user, role: userData.role };
@@ -242,6 +281,7 @@ export function AuthProvider({ children }) {
         isLoading,
         isAuthenticated,
         login,
+        loginWithGoogle,
         signup,
         logout,
         updateUser,

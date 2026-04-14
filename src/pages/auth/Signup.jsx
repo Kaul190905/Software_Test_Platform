@@ -8,7 +8,7 @@ import '../auth.css';
 
 function Signup() {
     const navigate = useNavigate();
-    const { signup } = useAuth();
+    const { signup, loginWithGoogle } = useAuth();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -22,6 +22,7 @@ function Signup() {
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [verificationSent, setVerificationSent] = useState(false);
 
     const roles = [
         { id: 'developer', label: 'Developer', icon: FiCode, description: 'Post testing tasks' },
@@ -86,14 +87,37 @@ function Signup() {
             if (formData.adminCode === 'PROED_ADMIN_2024') {
                 signupData.role = 'admin';
             }
-            await signup(signupData);
-            navigate('/pending-approval');
+            const result = await signup(signupData);
+            
+            if (result?.needsVerification) {
+                setVerificationSent(true);
+            } else {
+                navigate('/pending-approval');
+            }
         } catch (error) {
-            setErrors({ submit: 'Registration failed. Please try again.' });
+            setErrors({ submit: error.message || 'Registration failed. Please try again.' });
         } finally {
             setIsLoading(false);
         }
     };
+
+    if (verificationSent) {
+        return (
+            <div className="auth-form success-state">
+                <div className="auth-logo-icon success">
+                    <FiMail size={48} />
+                </div>
+                <h2>Check your email</h2>
+                <p>We've sent a verification link to <strong>{formData.email}</strong>.</p>
+                <p className="subtext">Please click the link to verify your account and continue with the approval process.</p>
+                <div style={{ marginTop: '2rem' }}>
+                    <Link to="/login">
+                        <Button variant="primary" fullWidth>Back to Login</Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="auth-form">
@@ -288,6 +312,22 @@ function Signup() {
                     loading={isLoading}
                 >
                     Create account
+                </Button>
+
+                <div className="auth-separator">
+                    <span>OR</span>
+                </div>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    fullWidth
+                    onClick={() => loginWithGoogle(formData.role)}
+                    className="google-btn"
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="18" height="18" />
+                    Continue with Google
                 </Button>
             </form>
 
