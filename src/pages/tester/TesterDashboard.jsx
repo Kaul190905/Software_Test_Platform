@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { tasksAPI } from '../../services/api';
+import { tasksAPI, transactionsAPI } from '../../services/api';
 import { formatCurrency, formatCredits, formatDate, getDeadlineStatus } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Badge, { AIBadge } from '../../components/common/Badge';
@@ -15,17 +15,20 @@ function TesterDashboard() {
     const [stats, setStats] = useState(null);
     const [activeTasks, setActiveTasks] = useState([]);
     const [marketplaceTasks, setMarketplaceTasks] = useState([]);
+    const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [statsRes, myTasksRes, marketRes] = await Promise.all([
+                const [statsRes, myTasksRes, marketRes, analyticsRes] = await Promise.all([
                     tasksAPI.getStats(),
                     tasksAPI.myTasks(),
                     tasksAPI.marketplace(),
+                    transactionsAPI.getTesterAnalytics(),
                 ]);
                 setStats(statsRes);
+                setAnalytics(analyticsRes);
                 const tasks = (myTasksRes.tasks || []);
                 setActiveTasks(tasks.filter(t => !t.hasSubmitted));
                 setMarketplaceTasks(marketRes.tasks || []);
@@ -73,11 +76,27 @@ function TesterDashboard() {
     ];
 
     const earningsData = {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        labels: analytics?.earningsOverTime?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
             {
                 label: 'Credits Earned',
-                data: [450, 680, 520, 890],
+                data: analytics?.earningsOverTime?.data || [0, 0, 0, 0, 0, 0],
+            },
+        ],
+    };
+
+    const submissionData = {
+        labels: analytics?.submissionQuality?.labels || ['Approved', 'Rejected', 'Revision', 'Pending'],
+        datasets: [
+            {
+                data: analytics?.submissionQuality?.data || [0, 0, 0, 0],
+                backgroundColor: [
+                    '#10b981', // success
+                    '#ef4444', // error
+                    '#f59e0b', // warning
+                    '#3b82f6', // primary
+                ],
+                borderWidth: 0,
             },
         ],
     };

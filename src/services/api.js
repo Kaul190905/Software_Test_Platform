@@ -207,6 +207,45 @@ export const tasksAPI = {
             };
         }
     },
+    
+    getDashboardAnalytics: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        // Fetch my tasks for trend analysis
+        const { data: myTasks } = await supabase
+            .from('tasks')
+            .select('id, created_at, status, budget')
+            .eq('developer_id', user.id)
+            .order('created_at', { ascending: true });
+
+        const trends = aggregateByMonth(myTasks || [], 'created_at', 'budget');
+        const completedTrends = aggregateByMonth((myTasks || []).filter(t => t.status === 'completed'), 'created_at');
+
+        return {
+            tasksOverTime: {
+                labels: trends.labels,
+                datasets: [
+                    { 
+                        label: 'Tasks Created', 
+                        data: trends.counts, 
+                        borderColor: '#6366f1', 
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)' 
+                    },
+                    { 
+                        label: 'Tasks Completed', 
+                        data: completedTrends.counts, 
+                        borderColor: '#14b8a6', 
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)' 
+                    },
+                ],
+            },
+            budgetSpent: {
+                labels: trends.labels,
+                data: trends.totals
+            }
+        };
+    },
 
     get: async (id) => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -1071,6 +1110,45 @@ export const transactionsAPI = {
 
     },
 
+    getTesterAnalytics: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        // 1. Fetch transactions for earnings trends
+        const { data: myTransactions } = await supabase
+            .from('transactions')
+            .select('amount, created_at, type')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .order('created_at', { ascending: true });
+
+        const earningsTrend = aggregateByMonth(myTransactions || [], 'created_at', 'amount');
+
+        // 2. Fetch feedback for submission quality
+        const { data: myFeedback } = await supabase
+            .from('feedback')
+            .select('id, status, created_at')
+            .eq('tester_id', user.id);
+
+        const submissionCounts = {
+            approved: (myFeedback || []).filter(f => f.status === 'approved').length,
+            rejected: (myFeedback || []).filter(f => f.status === 'rejected').length,
+            revision: (myFeedback || []).filter(f => f.status === 'needs-revision').length,
+            pending: (myFeedback || []).filter(f => f.status === 'pending').length
+        };
+
+        return {
+            earningsOverTime: {
+                labels: earningsTrend.labels,
+                data: earningsTrend.totals
+            },
+            submissionQuality: {
+                labels: ['Approved', 'Rejected', 'Needs Revision', 'Pending'],
+                data: [submissionCounts.approved, submissionCounts.rejected, submissionCounts.revision, submissionCounts.pending]
+            }
+        };
+    },
+
     record: async (txData) => {
         // Use provided userId or fall back to current authenticated user
         let targetUserId = txData.userId;
@@ -1127,31 +1205,109 @@ export const transactionsAPI = {
 };
 
 // ============ Analytics API ============
+// Helper to group data by month for the last 6 months
+const aggregateByMonth = (items, dateField, valueField = null) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
+    const last6Months = [];
+    
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        last6Months.push({
+            name: months[d.getMonth()],
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            count: 0,
+            total: 0
+        });
+    }
+
+    items.forEach(item => {
+        const itemDate = new Date(item[dateField]);
+        const m = itemDate.getMonth();
+        const y = itemDate.getFullYear();
+        
+        const monthBucket = last6Months.find(b => b.month === m && b.year === y);
+        if (monthBucket) {
+            monthBucket.count += 1;
+            if (valueField && item[valueField]) {
+                monthBucket.total += parseFloat(item[valueField]);
+            }
+        }
+    });
+
+    return {
+        labels: last6Months.map(m => m.name),
+        counts: last6Months.map(m => m.count),
+        totals: last6Months.map(m => m.total)
+    };
+};
+
 export const analyticsAPI = {
     overview: async () => {
-        // Fetch admin stats
+        // Fetch base stats
         const stats = await tasksAPI.getStats();
+
+        // 1. Fetch Real Task Data for Trends
+        const { data: allTasks } = await supabase
+            .from('tasks')
+            .select('id, created_at, status, test_types')
+            .order('created_at', { ascending: true });
+        
+        const taskTrends = aggregateByMonth(allTasks || [], 'created_at');
+        const completedTasksTrend = aggregateByMonth((allTasks || []).filter(t => t.status === 'completed'), 'created_at');
+
+        // 2. Fetch Transaction Data for Revenue/Distribution
+        const { data: allTransactions } = await supabase
+            .from('transactions')
+            .select('amount, created_at, type')
+            .eq('status', 'completed');
+
+        const creditTrends = aggregateByMonth(allTransactions || [], 'created_at', 'amount');
+
+        // 3. Aggregate Task Types
+        const typeCounts = {};
+        (allTasks || []).forEach(t => {
+            (t.test_types || []).forEach(type => {
+                const formatted = type.charAt(0).toUpperCase() + type.slice(1);
+                typeCounts[formatted] = (typeCounts[formatted] || 0) + 1;
+            });
+        });
+
+        const sortedTypes = Object.entries(typeCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6);
 
         return {
             stats,
             tasksOverTime: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: taskTrends.labels,
                 datasets: [
-                    { label: 'Tasks Created', data: [45, 52, 68, 74, 82, 89], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)' },
-                    { label: 'Tasks Completed', data: [38, 45, 58, 65, 72, 78], borderColor: '#14b8a6', backgroundColor: 'rgba(20, 184, 166, 0.1)' },
+                    { 
+                        label: 'Tasks Created', 
+                        data: taskTrends.counts, 
+                        borderColor: '#6366f1', 
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)' 
+                    },
+                    { 
+                        label: 'Tasks Completed', 
+                        data: completedTasksTrend.counts, 
+                        borderColor: '#14b8a6', 
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)' 
+                    },
                 ],
             },
             creditsDistribution: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                data: [15000, 18500, 22000, 28000, 35000, 42000],
+                labels: creditTrends.labels,
+                data: creditTrends.totals,
             },
             tasksByType: {
-                labels: ['Functional', 'Security', 'Usability', 'Performance', 'Accessibility', 'Compatibility'],
-                data: [35, 25, 20, 12, 5, 3],
+                labels: sortedTypes.map(t => t[0]),
+                data: sortedTypes.map(t => t[1]),
             },
             platformRevenue: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                data: [2250, 2775, 3300, 4200, 5250, 6300],
+                labels: creditTrends.labels,
+                data: creditTrends.totals.map(total => total * 0.1), // Assumes 10% platform fee
             },
         };
     },

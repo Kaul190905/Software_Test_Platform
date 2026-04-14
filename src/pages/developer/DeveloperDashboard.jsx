@@ -15,19 +15,22 @@ function DeveloperDashboard() {
     const [dashStats, setDashStats] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [feedback, setFeedback] = useState([]);
+    const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [statsRes, tasksRes, feedbackRes] = await Promise.all([
+                const [statsRes, tasksRes, feedbackRes, analyticsRes] = await Promise.all([
                     tasksAPI.getStats(),
                     tasksAPI.list(),
                     feedbackAPI.list(),
+                    tasksAPI.getDashboardAnalytics(),
                 ]);
                 setDashStats(statsRes);
                 setTasks(tasksRes.tasks || []);
                 setFeedback(feedbackRes.feedback || []);
+                setAnalytics(analyticsRes);
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
             } finally {
@@ -70,16 +73,16 @@ function DeveloperDashboard() {
         },
     ];
 
-    const chartData = {
+    const chartData = analytics?.tasksOverTime || {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
             {
                 label: 'Tasks Created',
-                data: [8, 12, 10, 15, 14, 18],
+                data: [0, 0, 0, 0, 0, 0],
             },
             {
                 label: 'Tasks Completed',
-                data: [6, 10, 8, 12, 13, 15],
+                data: [0, 0, 0, 0, 0, 0],
             },
         ],
     };
@@ -177,8 +180,8 @@ function DeveloperDashboard() {
                     </div>
                 </div>
 
-                {/* Task Chart */}
-                <div className="col-4">
+                {/* Charts Row */}
+                <div className="col-8">
                     <div className="card">
                         <div className="card-header">
                             <h3 className="card-title">Task Overview</h3>
@@ -186,6 +189,26 @@ function DeveloperDashboard() {
                         <Chart
                             type="line"
                             data={chartData}
+                            height={220}
+                        />
+                    </div>
+                </div>
+
+                <div className="col-4">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Budget Spent</h3>
+                        </div>
+                        <Chart
+                            type="bar"
+                            data={{
+                                labels: analytics?.budgetSpent?.labels || [],
+                                datasets: [{
+                                    label: 'Monthly Spend',
+                                    data: analytics?.budgetSpent?.data || [],
+                                    backgroundColor: '#10b981'
+                                }]
+                            }}
                             height={220}
                         />
                     </div>

@@ -78,11 +78,11 @@ function AdminDashboard() {
     ];
 
     const revenueData = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: analyticsData?.platformRevenue?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
             {
                 label: 'Revenue',
-                data: [4500, 5200, 4800, 6100, 5800, 4200, 5500],
+                data: analyticsData?.platformRevenue?.data || [0, 0, 0, 0, 0, 0],
                 borderColor: '#6366f1',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
             },
@@ -90,31 +90,27 @@ function AdminDashboard() {
     };
 
     const userGrowthData = {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        labels: analyticsData?.tasksOverTime?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
             {
-                label: 'Developers',
-                data: [45, 62, 78, 95],
+                label: 'Overall Activity',
+                data: analyticsData?.tasksOverTime?.datasets?.[0]?.data || [0, 0, 0, 0, 0, 0],
                 borderColor: '#6366f1',
-            },
-            {
-                label: 'Testers',
-                data: [80, 110, 145, 180],
-                borderColor: '#14b8a6',
             },
         ],
     };
 
     const taskDistributionData = {
-        labels: ['UI Testing', 'Functional', 'Performance', 'Security', 'Usability'],
+        labels: analyticsData?.tasksByType?.labels || ['None'],
         datasets: [
             {
-                data: [35, 25, 18, 12, 10],
+                data: analyticsData?.tasksByType?.data || [0],
                 backgroundColor: [
                     'rgba(99, 102, 241, 0.8)',
                     'rgba(20, 184, 166, 0.8)',
                     'rgba(59, 130, 246, 0.8)',
                     'rgba(245, 158, 11, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
                     'rgba(139, 92, 246, 0.8)',
                 ],
             },
@@ -124,8 +120,8 @@ function AdminDashboard() {
     const tasksOverTimeData = analyticsData?.tasksOverTime || {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
         datasets: [
-            { label: 'Tasks Created', data: [45, 52, 68, 74, 82, 89], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)' },
-            { label: 'Tasks Completed', data: [38, 45, 58, 65, 72, 78], borderColor: '#14b8a6', backgroundColor: 'rgba(20, 184, 166, 0.1)' },
+            { label: 'Tasks Created', data: [0, 0, 0, 0, 0, 0], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)' },
+            { label: 'Tasks Completed', data: [0, 0, 0, 0, 0, 0], borderColor: '#14b8a6', backgroundColor: 'rgba(20, 184, 166, 0.1)' },
         ],
     };
 
