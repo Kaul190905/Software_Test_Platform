@@ -126,8 +126,8 @@ function FeedbackReview() {
             </div>
 
             {/* Feedback List */}
-            <div className="feedback-list">
-                {filteredFeedbacks.length === 0 && (
+            <div className="table-responsive">
+                {filteredFeedbacks.length === 0 ? (
                     <div className="empty-state">
                         <FiMessageCircle size={48} />
                         <h3>No Feedback Found</h3>
@@ -137,64 +137,73 @@ function FeedbackReview() {
                                 : `No submissions found with status "${filter}".`}
                         </p>
                     </div>
+                ) : (
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tester</th>
+                                <th>Task & Date</th>
+                                <th>Score</th>
+                                <th>AI Check</th>
+                                <th>Result</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredFeedbacks.map(feedback => (
+                                <tr key={feedback.id || feedback._id}>
+                                    <td>
+                                        <div className="tester-info">
+                                            <div className="avatar">{(feedback.testerName || 'Anonymous').split(' ').map(n => n[0]).join('')}</div>
+                                            <div>
+                                                <div className="tester-name">{feedback.testerName || 'Anonymous Tester'}</div>
+                                                <div className="tester-rating">
+                                                    <FiStar size={12} />
+                                                    <span>{feedback.testerRating || 5.0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="task-info">
+                                            <div className="task-name">{feedback.taskName}</div>
+                                            <div className="submit-date">{formatDate(feedback.submittedAt)}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="score-value">{feedback.creditScore}/100</div>
+                                    </td>
+                                    <td>
+                                        <AIBadge status={feedback.aiVerification} />
+                                    </td>
+                                    <td>
+                                        <Badge
+                                            variant={
+                                                feedback.testResult === 'pass' ? 'success' :
+                                                    feedback.testResult === 'fail' ? 'danger' : 'warning'
+                                            }
+                                        >
+                                            {feedback.testResult === 'issues-found' ? 'Issues Found' : feedback.testResult}
+                                        </Badge>
+                                    </td>
+                                    <td>
+                                        {getStatusBadge(feedback.status)}
+                                    </td>
+                                    <td>
+                                        <Button 
+                                            variant={feedback.status === 'pending' ? 'primary' : 'secondary'} 
+                                            size="sm" 
+                                            onClick={() => openReviewModal(feedback)}
+                                        >
+                                            {feedback.status === 'pending' ? 'Review' : 'View'}
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
-                {filteredFeedbacks.map(feedback => (
-                    <div key={feedback.id} className="card feedback-item">
-                        <div className="feedback-item-header">
-                            <div className="tester-info">
-                                <div className="avatar">{feedback.testerName.split(' ').map(n => n[0]).join('')}</div>
-                                <div>
-                                    <h4 className="tester-name">{feedback.testerName || 'Anonymous Tester'}</h4>
-                                    <div className="tester-rating">
-                                        <FiStar size={12} />
-                                        <span>{feedback.testerRating || 5.0}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="feedback-badges">
-                                <AIBadge status={feedback.aiVerification} />
-                                {getStatusBadge(feedback.status)}
-                            </div>
-                        </div>
-
-                        <div className="feedback-item-body">
-                            <div className="feedback-meta">
-                                <span className="task-name">{feedback.taskName}</span>
-                                <span className="submit-date">{formatDate(feedback.submittedAt)}</span>
-                            </div>
-
-                            <p className="feedback-observations">{feedback.observations}</p>
-
-                            <div className="proof-preview">
-                                <div className="proof-type">
-                                    {feedback.proofType === 'video' ? <FiVideo size={16} /> : <FiImage size={16} />}
-                                    <span>{feedback.proofType === 'video' ? 'Video Recording' : 'Screenshots'}</span>
-                                </div>
-                                <div className="credit-score">
-                                    <span className="score-label">AI Credit Score</span>
-                                    <span className="score-value">{feedback.creditScore}/100</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="feedback-item-footer">
-                            <Badge
-                                variant={
-                                    feedback.testResult === 'pass' ? 'success' :
-                                        feedback.testResult === 'fail' ? 'danger' : 'warning'
-                                }
-                            >
-                                {feedback.testResult === 'issues-found' ? 'Issues Found' : feedback.testResult}
-                            </Badge>
-
-                            {feedback.status === 'pending' && (
-                                <Button variant="primary" size="sm" onClick={() => openReviewModal(feedback)}>
-                                    Review
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                ))}
             </div>
 
             {/* Review Modal */}
@@ -202,7 +211,29 @@ function FeedbackReview() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 title="Review Submission"
-                size="lg"
+                size="xl"
+                footer={
+                    selectedFeedback ? (
+                        <>
+                            <Button
+                                variant="danger"
+                                size="sm"
+                                icon={<FiMessageCircle />}
+                                onClick={() => handleRequestClarification(selectedFeedback._id || selectedFeedback.id)}
+                            >
+                                Request Clarification
+                            </Button>
+                            <Button
+                                variant="success"
+                                size="sm"
+                                icon={<FiCheck />}
+                                onClick={() => handleApprove(selectedFeedback._id || selectedFeedback.id)}
+                            >
+                                Approve & Release Credits
+                            </Button>
+                        </>
+                    ) : null
+                }
             >
                 {selectedFeedback && (
                     <div className="review-modal-content">
@@ -292,23 +323,6 @@ function FeedbackReview() {
                                 onChange={(e) => setClarificationNote(e.target.value)}
                                 rows={3}
                             />
-                        </div>
-
-                        <div className="review-actions">
-                            <Button
-                                variant="danger"
-                                icon={<FiMessageCircle />}
-                                onClick={() => handleRequestClarification(selectedFeedback._id || selectedFeedback.id)}
-                            >
-                                Request Clarification
-                            </Button>
-                            <Button
-                                variant="success"
-                                icon={<FiCheck />}
-                                onClick={() => handleApprove(selectedFeedback._id || selectedFeedback.id)}
-                            >
-                                Approve & Release Credits
-                            </Button>
                         </div>
                     </div>
                 )}

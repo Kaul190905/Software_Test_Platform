@@ -4,7 +4,7 @@
     left: var(--space-4);
     right: var(--space-4);
     height: var(--navbar-height);
-    background: rgba(10, 15, 28, 0.85);
+    background: var(--glass-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--glass-border);
@@ -164,10 +164,10 @@
     top: calc(100% + 12px);
     right: 0;
     width: 240px;
-    background: #111827; /* Solid Navy Dark */
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: var(--radius-xl);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-xl);
     padding: var(--space-2);
     animation: slideUp var(--transition-fast) ease-out;
     z-index: 1000; /* Higher than anything else */
@@ -268,7 +268,7 @@
     padding: var(--space-3) var(--space-4);
     background: transparent;
     border: none;
-    color: #ffffff !important; /* Force White for text */
+    color: var(--text-primary) !important;
     font-size: var(--font-size-sm);
     font-weight: 500;
     text-align: left;
@@ -280,8 +280,8 @@
 }
 
 .dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    color: var(--primary-400) !important;
 }
 
 .dropdown-item.logout {

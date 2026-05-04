@@ -111,11 +111,11 @@
 
 .nav-link.active {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(20, 184, 166, 0.1));
-    color: var(--primary-400);
+    color: var(--nav-active-color, var(--primary-400));
 }
 
 .nav-link.active .nav-icon {
-    color: var(--primary-400);
+    color: var(--nav-active-color, var(--primary-400));
 }
 
 .nav-icon {
@@ -213,7 +213,7 @@
 }
 
 .sidebar-help:hover {
-    background: var(--slate-600);
+    background: var(--bg-tertiary);
 }
 
 .help-icon {
@@ -281,6 +281,6 @@
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background: var(--slate-600);
+    background: var(--border-secondary);
     border-radius: var(--radius-full);
 }

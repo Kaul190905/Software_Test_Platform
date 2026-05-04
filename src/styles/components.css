@@ -16,7 +16,7 @@
 }
 
 .card:hover {
-    background: rgba(30, 41, 59, 0.4);
+    background: var(--bg-card-hover);
     border-color: var(--glass-border-light);
     transform: translateY(-4px);
     box-shadow: var(--shadow-glow);
@@ -249,7 +249,7 @@
 .form-input {
     width: 100%;
     padding: 14px 16px;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--bg-tertiary);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     font-size: var(--font-size-base);
@@ -261,14 +261,14 @@
 
 .form-input:hover {
     border-color: var(--glass-border-light);
-    background: rgba(30, 41, 59, 0.5);
+    background: var(--bg-secondary);
 }
 
 .form-input:focus {
     outline: none;
     border-color: var(--primary-400);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    background: rgba(15, 23, 42, 0.7);
+    background: var(--bg-card);
 }
 
 .form-input::placeholder {

@@ -25,11 +25,15 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     min-width: 320px;
     max-width: 420px;
-    animation: slideInRight var(--transition-normal) ease-out;
+    animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     pointer-events: auto;
+    overflow: hidden;
+    position: relative;
 }
 
 @media (max-width: 640px) {
@@ -91,6 +95,7 @@
     font-size: var(--font-size-xs);
     color: var(--text-secondary);
     margin-top: var(--space-1);
+    line-height: 1.5;
 }
 
 .toast-close {
@@ -109,14 +114,49 @@
     color: var(--text-primary);
 }
 
+/* Progress bar that shrinks over the toast duration */
+.toast::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.25;
+    animation: toastProgress 5s linear forwards;
+    transform-origin: left;
+}
+
+.toast.success::after  { color: var(--success-500); opacity: 0.4; }
+.toast.error::after    { color: var(--error-500);   opacity: 0.4; }
+.toast.warning::after  { color: var(--warning-500); opacity: 0.4; }
+.toast.info::after     { color: var(--info-500);    opacity: 0.4; }
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(110%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes toastProgress {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/* Keep legacy alias for any callers that used slideInRight */
 @keyframes slideInRight {
     from {
         opacity: 0;
         transform: translateX(100%);
     }
-
     to {
         opacity: 1;
         transform: translateX(0);
     }
-}
+}

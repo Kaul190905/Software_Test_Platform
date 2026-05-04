@@ -169,12 +169,12 @@
 }
 
 /* Empty State */
-.empty-state {
+.tester-dashboard .empty-state {
     text-align: center;
     padding: var(--space-8);
 }
 
-.empty-state p {
+.tester-dashboard .empty-state p {
     color: var(--text-secondary);
     margin-bottom: var(--space-4);
 }

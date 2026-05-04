@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiZap, FiBriefcase, FiCode, FiTarget, FiShield } from 'react-icons/fi';
 import { getPasswordStrength } from '../../utils/helpers';
@@ -9,6 +10,7 @@ import '../auth.css';
 function Signup() {
     const navigate = useNavigate();
     const { signup, loginWithGoogle } = useAuth();
+    const toast = useToast();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -90,12 +92,16 @@ function Signup() {
             const result = await signup(signupData);
             
             if (result?.needsVerification) {
+                toast.success('Account Created!', `A verification link has been sent to ${formData.email}. Please check your inbox.`);
                 setVerificationSent(true);
             } else {
+                toast.success('Account Created!', 'Your account is pending admin approval. You will be notified once approved.');
                 navigate('/pending-approval');
             }
         } catch (error) {
-            setErrors({ submit: error.message || 'Registration failed. Please try again.' });
+            const msg = error.message || 'Registration failed. Please try again.';
+            toast.error('Registration Failed', msg);
+            setErrors({ submit: msg });
         } finally {
             setIsLoading(false);
         }

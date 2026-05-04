@@ -85,7 +85,7 @@
     color: var(--text-primary);
 }
 
-.actions-dropdown {
+.admin-tasks-page .actions-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
@@ -100,7 +100,7 @@
     animation: fadeIn var(--transition-fast) ease-out;
 }
 
-.actions-dropdown button {
+.admin-tasks-page .actions-dropdown button {
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -115,16 +115,16 @@
     transition: all var(--transition-fast);
 }
 
-.actions-dropdown button:hover {
+.admin-tasks-page .actions-dropdown button:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
 }
 
-.actions-dropdown button.danger {
+.admin-tasks-page .actions-dropdown button.danger {
     color: var(--error-400);
 }
 
-.actions-dropdown button.danger:hover {
+.admin-tasks-page .actions-dropdown button.danger:hover {
     background: rgba(239, 68, 68, 0.1);
 }
 

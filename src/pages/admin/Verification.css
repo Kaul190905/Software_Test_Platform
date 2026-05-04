@@ -134,7 +134,7 @@
     gap: 1rem;
 }
 
-.empty-state {
+.verification-page .empty-state {
     padding: 5rem 2rem;
     text-align: center;
     display: flex;
@@ -144,7 +144,7 @@
     color: var(--text-secondary);
 }
 
-.empty-state h3 {
+.verification-page .empty-state h3 {
     color: var(--text-primary);
 }
 

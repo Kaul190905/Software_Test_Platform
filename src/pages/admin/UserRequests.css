@@ -8,7 +8,7 @@
     gap: var(--space-4);
 }
 
-.back-btn {
+.user-requests-page .back-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -22,7 +22,7 @@
     transition: all var(--transition-fast);
 }
 
-.back-btn:hover {
+.user-requests-page .back-btn:hover {
     background: var(--bg-card-hover);
     border-color: var(--primary-500);
 }
@@ -132,7 +132,7 @@
 }
 
 /* Empty State */
-.empty-state {
+.user-requests-page .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -153,12 +153,12 @@
     color: var(--text-muted);
 }
 
-.empty-state h3 {
+.user-requests-page .empty-state h3 {
     font-size: var(--font-size-xl);
     color: var(--text-primary);
 }
 
-.empty-state p {
+.user-requests-page .empty-state p {
     color: var(--text-muted);
     margin-bottom: var(--space-4);
 }

@@ -190,6 +190,37 @@
   --navbar-height: 64px;
 }
 
+[data-theme="light"] {
+  /* Background Colors */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-overlay: rgba(15, 23, 42, 0.5);
+
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-light: rgba(0, 0, 0, 0.04);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+
+  /* Text Colors */
+  --text-primary: var(--slate-800);
+  --text-secondary: var(--slate-600);
+  --text-tertiary: var(--slate-500);
+  --text-muted: var(--slate-400);
+  --text-inverse: var(--slate-50);
+
+  /* Border Colors */
+  --border-primary: var(--slate-200);
+  --border-secondary: var(--slate-300);
+  --border-focus: var(--primary-500);
+
+  /* Component specifics */
+  --nav-active-color: var(--primary-600);
+}
+
 /* Responsive breakpoints reference:
    - Mobile: < 640px
    - Tablet: 640px - 1024px

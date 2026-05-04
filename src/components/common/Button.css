@@ -14,6 +14,13 @@
     position: relative;
 }
 
+.btn-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: inherit;
+}
+
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;

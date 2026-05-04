@@ -161,7 +161,7 @@
     color: var(--accent-success, #10b981);
 }
 
-.empty-state {
+.my-tasks-page .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;

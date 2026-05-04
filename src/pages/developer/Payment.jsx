@@ -87,11 +87,11 @@ function Payment() {
 
     return (
         <div className="payment-page">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+                <FiArrowLeft size={18} />
+                <span>Back</span>
+            </button>
             <div className="page-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    <FiArrowLeft size={18} />
-                    <span>Back</span>
-                </button>
                 <div>
                     <h1 className="page-title">Complete Payment</h1>
                     <p className="page-subtitle">Secure payment powered by TestFlow</p>

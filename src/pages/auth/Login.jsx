@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiZap } from 'react-icons/fi';
 import '../auth.css';
@@ -8,6 +9,7 @@ import '../auth.css';
 function Login() {
     const navigate = useNavigate();
     const { login, loginWithGoogle } = useAuth();
+    const toast = useToast();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -52,13 +54,26 @@ function Login() {
         setIsLoading(true);
         try {
             const userData = await login(formData.email, formData.password);
+            toast.success('Login Successful', `Welcome back, ${userData.name || userData.email}!`);
             if (userData.status === 'pending' && userData.role !== 'admin') {
                 navigate('/pending-approval');
             } else {
                 navigate(`/${userData.role}/dashboard`);
             }
         } catch (error) {
-            setErrors({ submit: 'Invalid credentials. Please try again.' });
+            const msg = error.message || 'Invalid credentials. Please try again.';
+            // Distinguish between wrong credentials and other errors
+            if (
+                msg.toLowerCase().includes('invalid') ||
+                msg.toLowerCase().includes('credentials') ||
+                msg.toLowerCase().includes('password') ||
+                msg.toLowerCase().includes('user not found')
+            ) {
+                toast.error('Login Failed', 'Invalid email or password. Please try again.');
+            } else {
+                toast.error('Login Failed', msg);
+            }
+            setErrors({ submit: msg });
         } finally {
             setIsLoading(false);
         }
@@ -154,7 +169,7 @@ function Login() {
                 </div>
 
                 {errors.submit && (
-                    <div className="form-error-banner">
+                    <div className="form-error-banner" role="alert">
                         {errors.submit}
                     </div>
                 )}

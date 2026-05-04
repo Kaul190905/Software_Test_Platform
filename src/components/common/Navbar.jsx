@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { getInitials } from '../../utils/helpers';
 import NotificationModal from './NotificationModal';
 import { useNotifications } from '../../context/NotificationContext';
+import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
 
 function Navbar({ onMenuToggle, isSidebarOpen }) {
@@ -78,6 +79,8 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
             </div>
 
             <div className="navbar-right">
+                <ThemeToggle />
+                
                 {/* Notifications */}
                 <button
                     className="navbar-icon-btn"

@@ -73,18 +73,22 @@ function DeveloperDashboard() {
         },
     ];
 
-    const chartData = analytics?.tasksOverTime || {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    const bugTrendsData = analytics?.bugTrends || {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
         datasets: [
             {
-                label: 'Tasks Created',
-                data: [0, 0, 0, 0, 0, 0],
+                label: 'Critical Bugs',
+                data: [12, 19, 3, 5],
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
             },
             {
-                label: 'Tasks Completed',
-                data: [0, 0, 0, 0, 0, 0],
-            },
-        ],
+                label: 'Minor Issues',
+                data: [45, 32, 56, 48],
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            }
+        ]
     };
 
     const getStatusBadge = (status) => {
@@ -184,11 +188,11 @@ function DeveloperDashboard() {
                 <div className="col-8">
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">Task Overview</h3>
+                            <h3 className="card-title">Bug Discovery Trends</h3>
                         </div>
                         <Chart
                             type="line"
-                            data={chartData}
+                            data={bugTrendsData}
                             height={220}
                         />
                     </div>

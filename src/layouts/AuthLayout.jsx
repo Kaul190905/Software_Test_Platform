@@ -2,10 +2,25 @@ import { Outlet, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Loader from '../components/common/Loader';
 import { FiZap } from 'react-icons/fi';
+import { useEffect } from 'react';
 import './AuthLayout.css';
 
 function AuthLayout() {
     const { isLoading, isAuthenticated, user } = useAuth();
+
+    useEffect(() => {
+        // Force dark theme for auth pages
+        const originalTheme = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        
+        return () => {
+            if (originalTheme) {
+                document.documentElement.setAttribute('data-theme', originalTheme);
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        };
+    }, []);
 
     if (isLoading) {
         console.debug('[AuthLayout] Rendering loader (isLoading=true)');
@@ -16,7 +31,7 @@ function AuthLayout() {
         <div className="auth-split-layout">
             <div className="auth-brand-panel">
                 <div className="auth-brand-content">
-                    <Link to="/" className="auth-logo">
+                    <Link to="/" className="auth-logo" style={{ marginBottom: 'var(--space-8)' }}>
                         <div className="auth-logo-icon">
                             <FiZap size={32} />
                         </div>
