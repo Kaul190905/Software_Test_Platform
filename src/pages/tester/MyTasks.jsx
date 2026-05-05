@@ -1,3 +1,4 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { tasksAPI } from '../../services/api';
@@ -5,7 +6,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { formatDate, formatCredits } from '../../utils/helpers';
-import { FiArrowRight, FiClock, FiCheckCircle, FiDollarSign, FiExternalLink } from 'react-icons/fi';
+import { FiArrowRight, FiClock, FiCheckCircle, FiExternalLink } from 'react-icons/fi';
 import './MyTasks.css';
 
 function MyTasks() {
@@ -148,7 +149,7 @@ function MyTasks() {
                                 <span>Deadline: {formatDate(task.deadline)}</span>
                             </div>
                             <div className="meta-item">
-                                <FiDollarSign size={14} />
+                                <BsCurrencyRupee size={14} />
                                 <span>Credits: {formatCredits(task.credits || task.budget || 0)}</span>
                             </div>
                             <div className="meta-item full-width">

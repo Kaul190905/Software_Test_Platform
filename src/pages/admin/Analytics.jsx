@@ -1,8 +1,9 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { analyticsAPI } from '../../services/api';
 import Chart from '../../components/common/Chart';
 import Loader from '../../components/common/Loader';
-import { FiUsers, FiActivity, FiDollarSign, FiZap } from 'react-icons/fi';
+import { FiUsers, FiActivity, FiZap } from 'react-icons/fi';
 import './Analytics.css';
 
 function Analytics() {
@@ -86,7 +87,7 @@ function Analytics() {
                         <h2 className="stat-value">₹{stats.platformRevenue || 0}</h2>
                         <span className="stat-trend positive">+{stats.revenueChange || 0}% growth</span>
                     </div>
-                    <FiDollarSign className="stat-icon" />
+                    <BsCurrencyRupee className="stat-icon" />
                 </div>
 
                 <div className="card analytics-stat-card">

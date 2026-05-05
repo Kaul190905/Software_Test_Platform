@@ -1,3 +1,4 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { tasksAPI } from '../../services/api';
 import Badge from '../../components/common/Badge';
@@ -5,7 +6,7 @@ import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import { useToast } from '../../components/common/Toast';
-import { FiSearch, FiFilter, FiMoreVertical, FiExternalLink, FiTrash2, FiEdit2, FiEye, FiGlobe, FiDollarSign, FiCalendar, FiCheck } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiMoreVertical, FiExternalLink, FiTrash2, FiEdit2, FiEye, FiGlobe, FiCalendar, FiCheck } from 'react-icons/fi';
 import './AdminTasks.css';
 
 const testTypes = [
@@ -341,7 +342,7 @@ function AdminTasks() {
                             <div className="form-group">
                                 <label className="form-label">Budget (INR)</label>
                                 <div className="input-with-icon">
-                                    <FiDollarSign className="input-icon" />
+                                    <BsCurrencyRupee className="input-icon" />
                                     <input
                                         type="number"
                                         name="budget"

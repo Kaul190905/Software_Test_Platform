@@ -1,10 +1,11 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { transactionsAPI } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/helpers';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
-import { FiDollarSign, FiTrendingUp, FiArrowUpRight, FiArrowDownLeft } from 'react-icons/fi';
+import { FiTrendingUp, FiArrowUpRight, FiArrowDownLeft } from 'react-icons/fi';
 import './Wallet.css';
 
 function Wallet() {

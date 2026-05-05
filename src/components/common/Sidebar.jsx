@@ -1,28 +1,9 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import HelpModal from './HelpModal';
-import {
-    FiHome,
-    FiPlus,
-    FiCreditCard,
-    FiMessageSquare,
-    FiFileText,
-    FiShoppingCart,
-    FiUpload,
-    FiCheckCircle,
-    FiDollarSign,
-    FiUsers,
-    FiActivity,
-    FiPieChart,
-    FiClipboard,
-    FiShield,
-    FiTrendingUp,
-    FiZap,
-    FiLogOut,
-    FiHelpCircle,
-    FiUser
-} from 'react-icons/fi';
+import { FiHome, FiPlus, FiCreditCard, FiMessageSquare, FiFileText, FiShoppingCart, FiUpload, FiCheckCircle, FiUsers, FiActivity, FiPieChart, FiClipboard, FiShield, FiTrendingUp, FiZap, FiLogOut, FiHelpCircle, FiUser } from 'react-icons/fi';
 import './Sidebar.css';
 
 function Sidebar({ isOpen, onClose }) {
@@ -49,7 +30,7 @@ function Sidebar({ isOpen, onClose }) {
         { path: '/tester/marketplace', icon: FiShoppingCart, label: 'Marketplace' },
         { path: '/tester/my-tasks', icon: FiClipboard, label: 'My Tasks' },
         { path: '/tester/status', icon: FiCheckCircle, label: 'Task Status' },
-        { path: '/tester/wallet', icon: FiDollarSign, label: 'Wallet' },
+        { path: '/tester/wallet', icon: BsCurrencyRupee, label: 'Wallet' },
     ];
 
     const adminLinks = [

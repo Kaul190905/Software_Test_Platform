@@ -1,10 +1,11 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
 import { tasksAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
-import { FiGlobe, FiDollarSign, FiCalendar, FiArrowLeft, FiArrowRight, FiCheck } from 'react-icons/fi';
+import { FiGlobe, FiCalendar, FiArrowLeft, FiArrowRight, FiCheck } from 'react-icons/fi';
 import './CreateTask.css';
 
 const testTypes = [
@@ -33,7 +34,6 @@ function CreateTask() {
         description: '',
         testingLevel: 'intermediate',
         selectedTestTypes: [],
-        budget: 300,
         deadline: '',
         requiredTesters: 3,
     });
@@ -42,7 +42,7 @@ function CreateTask() {
     const steps = [
         { id: 1, title: 'App Details', icon: FiGlobe },
         { id: 2, title: 'Testing Options', icon: FiCheck },
-        { id: 3, title: 'Budget & Deadline', icon: FiDollarSign },
+        { id: 3, title: 'Budget & Deadline', icon: BsCurrencyRupee },
     ];
 
     const handleChange = (e) => {
@@ -80,9 +80,6 @@ function CreateTask() {
         }
 
         if (step === 3) {
-            if (!formData.budget || formData.budget < 50) {
-                newErrors.budget = 'Minimum budget is ₹50';
-            }
             if (!formData.deadline) {
                 newErrors.deadline = 'Deadline is required';
             } else if (new Date(formData.deadline) <= new Date()) {
@@ -117,13 +114,22 @@ function CreateTask() {
 
         navigate('/developer/payments', {
             state: {
-                task: formData,
-                amount: formData.budget * 1.1 // Include platform fee
+                task: { ...formData, budget: calculatedBudget },
+                amount: calculatedBudget * 1.1 // Include platform fee
             }
         });
     };
 
     const selectedLevel = testingLevels.find(l => l.id === formData.testingLevel);
+
+    const calculateBudget = () => {
+        const baseTesterCost = 500 + (formData.selectedTestTypes.length * 50);
+        const levelMultiplier = selectedLevel?.creditMultiplier || 1;
+        const costPerTester = baseTesterCost * levelMultiplier;
+        return costPerTester * formData.requiredTesters;
+    };
+
+    const calculatedBudget = calculateBudget();
 
     return (
         <div className="create-task-page">
@@ -272,24 +278,6 @@ function CreateTask() {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label">Budget (INR) *</label>
-                                <div className="input-with-icon">
-                                    <FiDollarSign className="input-icon" />
-                                    <input
-                                        type="number"
-                                        name="budget"
-                                        className={`form-input ${errors.budget ? 'error' : ''}`}
-                                        placeholder="300"
-                                        min="50"
-                                        value={formData.budget}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                {errors.budget && <p className="form-error">{errors.budget}</p>}
-                                <p className="form-hint">Minimum ₹50. AI will allocate credits based on testing complexity.</p>
-                            </div>
-
-                            <div className="form-group">
                                 <label className="form-label">Number of Testers *</label>
                                 <input
                                     type="number"
@@ -343,16 +331,16 @@ function CreateTask() {
                                     <span className="summary-value">{formData.requiredTesters} testers</span>
                                 </div>
                                 <div className="summary-item">
-                                    <span className="summary-label">Budget</span>
-                                    <span className="summary-value">{formatCurrency(formData.budget)}</span>
+                                    <span className="summary-label">Calculated Budget</span>
+                                    <span className="summary-value">{formatCurrency(calculatedBudget)}</span>
                                 </div>
                                 <div className="summary-item">
                                     <span className="summary-label">Platform Fee (10%)</span>
-                                    <span className="summary-value">{formatCurrency(formData.budget * 0.1)}</span>
+                                    <span className="summary-value">{formatCurrency(calculatedBudget * 0.1)}</span>
                                 </div>
                                 <div className="summary-item total">
-                                    <span className="summary-label">Total</span>
-                                    <span className="summary-value">{formatCurrency(formData.budget * 1.1)}</span>
+                                    <span className="summary-label">Total Amount</span>
+                                    <span className="summary-value">{formatCurrency(calculatedBudget * 1.1)}</span>
                                 </div>
                             </div>
                         </div>

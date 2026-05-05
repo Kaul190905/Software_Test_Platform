@@ -1,3 +1,4 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -7,7 +8,7 @@ import Button from '../../components/common/Button';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
 import Loader from '../../components/common/Loader';
-import { FiDollarSign, FiClipboard, FiStar, FiCreditCard, FiArrowUpRight, FiCalendar, FiTrendingUp, FiExternalLink } from 'react-icons/fi';
+import { FiClipboard, FiStar, FiCreditCard, FiArrowUpRight, FiCalendar, FiTrendingUp, FiExternalLink } from 'react-icons/fi';
 import './TesterDashboard.css';
 
 function TesterDashboard() {

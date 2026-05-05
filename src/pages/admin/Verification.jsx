@@ -1,9 +1,10 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { feedbackAPI } from '../../services/api';
 import Badge, { AIBadge } from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
-import { FiCheckCircle, FiXCircle, FiInfo, FiEye, FiDollarSign } from 'react-icons/fi';
+import { FiCheckCircle, FiXCircle, FiInfo, FiEye } from 'react-icons/fi';
 import './Verification.css';
 
 function Verification() {
@@ -109,7 +110,7 @@ function Verification() {
                                 <div className="credit-input-group">
                                     <label>Credits to Release:</label>
                                     <div className="input-with-icon">
-                                        <FiDollarSign className="input-icon" />
+                                        <BsCurrencyRupee className="input-icon" />
                                         <input 
                                             type="number" 
                                             className="credit-input"

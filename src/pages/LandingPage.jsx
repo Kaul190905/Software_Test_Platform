@@ -1,12 +1,7 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-    FiZap, FiArrowRight, FiCheck, FiCode, FiSearch, FiClipboard,
-    FiMessageSquare, FiDollarSign, FiShield, FiUsers, FiStar,
-    FiTrendingUp, FiMail, FiPhone, FiMapPin, FiSend,
-    FiMenu, FiX, FiChevronDown, FiPlay, FiAward,
-    FiTarget, FiLayers, FiBarChart2, FiGlobe
-} from 'react-icons/fi';
+import { FiZap, FiArrowRight, FiCheck, FiCode, FiSearch, FiClipboard, FiMessageSquare, FiShield, FiUsers, FiStar, FiTrendingUp, FiMail, FiPhone, FiMapPin, FiSend, FiMenu, FiX, FiChevronDown, FiPlay, FiAward, FiTarget, FiLayers, FiBarChart2, FiGlobe } from 'react-icons/fi';
 import './LandingPage.css';
 
 /* ─── Intersection Observer hook for scroll animations ─── */
@@ -82,7 +77,7 @@ const HOW_IT_WORKS = [
         step: '04',
         title: 'Review & Pay',
         desc: 'Developers review the feedback, approve results, and testers receive payment through the integrated wallet.',
-        icon: <FiDollarSign />,
+        icon: <BsCurrencyRupee />,
     },
 ];
 

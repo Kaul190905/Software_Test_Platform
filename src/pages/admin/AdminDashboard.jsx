@@ -1,9 +1,10 @@
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { tasksAPI, usersAPI, transactionsAPI } from '../../services/api';
 import { formatCurrency, formatCredits, formatDate } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
 import Chart from '../../components/common/Chart';
-import { FiUsers, FiDollarSign, FiActivity, FiAlertTriangle, FiArrowUpRight, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
+import { FiUsers, FiActivity, FiAlertTriangle, FiArrowUpRight, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 
@@ -48,7 +49,7 @@ function AdminDashboard() {
         {
             label: 'Platform Revenue',
             value: formatCurrency(dashStats.platformRevenue || 0),
-            icon: FiDollarSign,
+            icon: BsCurrencyRupee,
             iconClass: 'success',
             change: dashStats.revenueChange || 0,
             positive: true,
