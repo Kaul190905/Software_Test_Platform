@@ -213,7 +213,7 @@ function FeedbackReview() {
                 title="Review Submission"
                 size="xl"
                 footer={
-                    selectedFeedback ? (
+                    selectedFeedback && selectedFeedback.status === 'pending' ? (
                         <>
                             <Button
                                 variant="danger"
@@ -314,16 +314,18 @@ function FeedbackReview() {
                             </div>
                         </div>
 
-                        <div className="review-section">
-                            <h4>Request Clarification Note (Optional)</h4>
-                            <textarea
-                                className="form-input form-textarea"
-                                placeholder="Explain what needs to be clarified or fixed..."
-                                value={clarificationNote}
-                                onChange={(e) => setClarificationNote(e.target.value)}
-                                rows={3}
-                            />
-                        </div>
+                        {selectedFeedback.status === 'pending' && (
+                            <div className="review-section">
+                                <h4>Request Clarification Note (Optional)</h4>
+                                <textarea
+                                    className="form-input form-textarea"
+                                    placeholder="Explain what needs to be clarified or fixed..."
+                                    value={clarificationNote}
+                                    onChange={(e) => setClarificationNote(e.target.value)}
+                                    rows={3}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </Modal>

@@ -1,10 +1,10 @@
-import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import { useToast } from '../../components/common/Toast';
 import { tasksAPI } from '../../services/api';
 import { formatCurrency } from '../../utils/helpers';
+import { BsCurrencyRupee } from 'react-icons/bs';
 import { FiGlobe, FiCalendar, FiArrowLeft, FiArrowRight, FiCheck } from 'react-icons/fi';
 import './CreateTask.css';
 
