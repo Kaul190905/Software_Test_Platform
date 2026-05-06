@@ -158,10 +158,6 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                                 </Link>
                             </div>
                             <div className="dropdown-divider" />
-                            <Link to={`/${user?.role}/profile`} className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                                <FiUser size={16} />
-                                <span>My Profile</span>
-                            </Link>
                             <button className="dropdown-item logout" onClick={handleLogout}>
                                 <FiLogOut size={16} />
                                 <span>Sign Out</span>

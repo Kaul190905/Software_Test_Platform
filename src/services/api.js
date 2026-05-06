@@ -66,9 +66,10 @@ export const tasksAPI = {
 
         // Automatically filter by developer_id for developers to enforce privacy
         const { data: { user } } = await supabase.auth.getUser();
+        let userRole = '';
         if (user) {
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-            const userRole = (profile?.role || '').toLowerCase();
+            userRole = (profile?.role || '').toLowerCase();
             if (userRole === 'developer') {
                 query = query.eq('developer_id', user.id);
             }
@@ -91,7 +92,12 @@ export const tasksAPI = {
         // Map testers to tasks and format
         const tasks = data.map(task => {
             const dev = task.profiles || {};
-            const assignedTesters = (testerData || []).filter(tt => tt.task_id === task.id);
+            const assignedTesters = (testerData || []).filter(tt => tt.task_id === task.id).map(tt => {
+                if (userRole === 'developer') {
+                    return { ...tt.profiles, name: `Tester-${tt.tester_id.substring(0, 8)}`, email: 'Hidden' };
+                }
+                return tt.profiles;
+            });
             return {
                 _id: task.id,
                 id: task.id,
@@ -108,7 +114,7 @@ export const tasksAPI = {
                 developer: { name: dev.name, email: dev.email, company: dev.company },
                 developerName: task.developer_name,
                 developerCompany: task.developer_company,
-                assignedTesters: assignedTesters.map(tt => tt.profiles),
+                assignedTesters: assignedTesters,
                 testersAssigned: assignedTesters.length,
                 requiredTesters: task.required_testers,
                 appliedTesters: task.applied_testers,
@@ -254,9 +260,10 @@ export const tasksAPI = {
             .select('*, profiles!tasks_developer_id_fkey(name, email, company)')
             .eq('id', id);
 
+        let userRole = '';
         if (user) {
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-            const userRole = (profile?.role || '').toLowerCase();
+            userRole = (profile?.role || '').toLowerCase();
             if (userRole === 'developer') {
                 query = query.eq('developer_id', user.id);
             }
@@ -272,7 +279,12 @@ export const tasksAPI = {
             .eq('task_id', id);
 
         const dev = data.profiles || {};
-        const assignedTesters = testerData || [];
+        const assignedTesters = (testerData || []).map(tt => {
+            if (userRole === 'developer') {
+                return { ...tt.profiles, name: `Tester-${tt.tester_id.substring(0, 8)}`, email: 'Hidden' };
+            }
+            return tt.profiles;
+        });
 
         return {
             task: {
@@ -294,7 +306,7 @@ export const tasksAPI = {
                 company: data.developer_company || dev.company || '',
                 companyName: data.developer_company || dev.company || '',
                 level: data.testing_level ? data.testing_level.charAt(0).toUpperCase() + data.testing_level.slice(1) : '',
-                assignedTesters: assignedTesters.map(tt => tt.profiles),
+                assignedTesters: assignedTesters,
                 testersAssigned: assignedTesters.length,
                 requiredTesters: data.required_testers,
                 appliedTesters: data.applied_testers,
@@ -625,7 +637,7 @@ export const feedbackAPI = {
             taskId: fb.task_id,
             taskName: fb.task_name || 'Unlabeled Task',
             tester: fb.tester_id,
-            testerName: fb.tester_name || 'Anonymous Tester',
+            testerName: userRole === 'developer' ? `Tester-${fb.tester_id.substring(0, 8)}` : (fb.tester_name || 'Anonymous Tester'),
             testerRating: fb.tester_rating || 5.0,
             proofType: fb.proof_type,
             proofUrl: fb.proof_url,

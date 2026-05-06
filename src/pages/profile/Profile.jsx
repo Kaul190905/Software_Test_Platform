@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { profilesAPI, authAPI } from '../../services/api';
 import { useToast } from '../../components/common/Toast';
 import Button from '../../components/common/Button';
 import FileUpload from '../../components/common/FileUpload';
 import { getInitials } from '../../utils/helpers';
-import { FiUser, FiMail, FiBriefcase, FiLock, FiSave, FiCamera, FiEdit3 } from 'react-icons/fi';
+import { FiUser, FiMail, FiBriefcase, FiLock, FiSave, FiCamera, FiEdit3, FiArrowLeft } from 'react-icons/fi';
 import './Profile.css';
 
 function Profile() {
     const { user, updateUser } = useAuth();
+    const navigate = useNavigate();
     const toast = useToast();
     
     const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -139,6 +141,13 @@ function Profile() {
                     <h1 className="page-title">My Profile</h1>
                     <p className="page-subtitle">Manage your personal information and account settings.</p>
                 </div>
+                <Button 
+                    variant="outline" 
+                    icon={<FiArrowLeft />} 
+                    onClick={() => navigate(-1)}
+                >
+                    Back
+                </Button>
             </div>
 
             <div className="profile-content">
