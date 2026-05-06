@@ -18,6 +18,9 @@ function Signup() {
         confirmPassword: '',
         role: 'developer',
         company: '',
+        bio: '',
+        skills: '',
+        experience: '',
         adminCode: '',
         agreeToTerms: false,
     });
@@ -86,6 +89,12 @@ function Signup() {
         setIsLoading(true);
         try {
             const signupData = { ...formData };
+            if (signupData.role === 'tester' && signupData.skills) {
+                signupData.skills = signupData.skills.split(',').map(s => s.trim()).filter(s => s !== '');
+            } else if (signupData.role === 'developer') {
+                signupData.skills = [];
+                signupData.experience = '';
+            }
             if (formData.adminCode === 'PROED_ADMIN_2024') {
                 signupData.role = 'admin';
             }
@@ -198,6 +207,50 @@ function Signup() {
                         </div>
                         {errors.company && <p className="form-error">{errors.company}</p>}
                     </div>
+                )}
+
+                {/* Bio */}
+                <div className="form-group">
+                    <label className="form-label" htmlFor="bio">Bio</label>
+                    <textarea
+                        id="bio"
+                        name="bio"
+                        className="form-input"
+                        placeholder="Tell us a bit about yourself..."
+                        rows="3"
+                        value={formData.bio}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* Tester Specific Fields */}
+                {formData.role === 'tester' && (
+                    <>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="skills">Skills</label>
+                            <input
+                                type="text"
+                                id="skills"
+                                name="skills"
+                                className="form-input"
+                                placeholder="React, Playwright, Manual Testing"
+                                value={formData.skills}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="experience">Experience (Years)</label>
+                            <input
+                                type="text"
+                                id="experience"
+                                name="experience"
+                                className="form-input"
+                                placeholder="e.g. 3 years"
+                                value={formData.experience}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </>
                 )}
 
                 {/* Email */}
