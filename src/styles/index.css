@@ -39,9 +39,9 @@ body::before {
     width: 200%;
     height: 200%;
     background:
-        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.4), transparent 30%),
-        radial-gradient(circle at 85% 30%, rgba(20, 184, 166, 0.4), transparent 30%),
-        radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.4), transparent 30%);
+        radial-gradient(circle at 15% 50%, var(--glow-1), transparent 30%),
+        radial-gradient(circle at 85% 30%, var(--glow-2), transparent 30%),
+        radial-gradient(circle at 50% 80%, var(--glow-3), transparent 30%);
     animation: backgroundRotate 40s ease-in-out infinite alternate;
     pointer-events: none;
     z-index: -1;

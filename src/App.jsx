@@ -41,6 +41,7 @@ import Verification from './pages/admin/Verification';
 import UserRequests from './pages/admin/UserRequests';
 import UserRequestDetails from './pages/admin/UserRequestDetails';
 import SupportTickets from './pages/admin/SupportTickets';
+import AdminUserProfile from './pages/admin/AdminUserProfile';
 import Profile from './pages/profile/Profile';
 
 function App() {
@@ -90,6 +91,7 @@ function App() {
                             <Route path="requests/:userId" element={<UserRequestDetails />} />
                             <Route path="dashboard" element={<AdminDashboard />} />
                             <Route path="users" element={<UserManagement />} />
+                            <Route path="users/:userId" element={<AdminUserProfile />} />
                             <Route path="tasks" element={<AdminTasks />} />
                             <Route path="verification" element={<Verification />} />
                             <Route path="support" element={<SupportTickets />} />

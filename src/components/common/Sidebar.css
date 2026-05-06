@@ -110,7 +110,7 @@
 }
 
 .nav-link.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(20, 184, 166, 0.1));
+    background: var(--nav-active-bg, linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(20, 184, 166, 0.1)));
     color: var(--nav-active-color, var(--primary-400));
 }
 

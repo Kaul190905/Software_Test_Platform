@@ -66,6 +66,10 @@
     gap: var(--space-2);
 }
 
+.navbar-notification-container {
+    position: relative;
+}
+
 .navbar-icon-btn {
     position: relative;
     width: 40px;

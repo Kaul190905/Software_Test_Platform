@@ -130,6 +130,19 @@
     background: rgba(99, 102, 241, 0.03);
 }
 
+.users-table tr.clickable-row {
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.users-table tr.clickable-row:hover {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .users-table tr.clickable-row:hover {
+    background: rgba(99, 102, 241, 0.05);
+}
+
 .user-cell {
     display: flex;
     align-items: center;
