@@ -32,7 +32,17 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const { notifications, unreadCount, markAllAsRead } = useNotifications();
+    const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
+
+    const handleNotificationClick = (notification) => {
+        if (notification.unread) {
+            markAsRead(notification.id);
+        }
+        if (notification.link) {
+            navigate(notification.link);
+        }
+        setIsNotificationOpen(false);
+    };
 
 
     const handleLogout = () => {
@@ -103,6 +113,7 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                         onClose={() => setIsNotificationOpen(false)} 
                         notifications={notifications}
                         onMarkAllAsRead={markAllAsRead}
+                        onNotificationClick={handleNotificationClick}
                     />
                 </div>
 
@@ -113,8 +124,8 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                     >
                         <div className="avatar sm">
-                            {user?.avatar ? (
-                                <img src={user.avatar} alt={user.name} />
+                            {user?.avatar_url ? (
+                                <img src={user.avatar_url} alt={user.name} />
                             ) : (
                                 getInitials(user?.name || 'User')
                             )}

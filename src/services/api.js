@@ -916,6 +916,7 @@ export const usersAPI = {
             bio: u.bio,
             experience: u.experience,
             skills: u.skills,
+            avatar_url: u.avatar_url,
         }));
 
         return { users };

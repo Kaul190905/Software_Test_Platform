@@ -240,7 +240,13 @@ function UserManagement() {
                                 >
                                     <td>
                                         <div className="user-cell">
-                                            <div className="avatar">{user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}</div>
+                                            <div className="avatar">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url} alt={user.name} />
+                                                ) : (
+                                                    user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'
+                                                )}
+                                            </div>
                                             <div>
                                                 <p className="user-name">{user.name}</p>
                                                 <p className="user-email">{user.email}</p>

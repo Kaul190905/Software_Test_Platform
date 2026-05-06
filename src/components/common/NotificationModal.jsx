@@ -2,10 +2,11 @@ import { FiX, FiBell, FiCheck } from 'react-icons/fi';
 import { formatRelativeTime } from '../../utils/helpers';
 import './NotificationModal.css';
 
-function NotificationModal({ isOpen, onClose, notifications, onMarkAllAsRead }) {
+function NotificationModal({ isOpen, onClose, notifications, onMarkAllAsRead, onNotificationClick }) {
     if (!isOpen) return null;
 
-    const unreadCount = notifications.filter(n => n.unread).length;
+    const unreadNotifications = notifications.filter(n => n.unread);
+    const unreadCount = unreadNotifications.length;
 
     return (
         <div className="notification-dropdown" onClick={e => e.stopPropagation()}>
@@ -20,17 +21,18 @@ function NotificationModal({ isOpen, onClose, notifications, onMarkAllAsRead }) 
             </div>
 
             <div className="notification-dropdown-body">
-                {notifications.length === 0 ? (
+                {unreadNotifications.length === 0 ? (
                     <div className="notification-empty">
                         <FiCheck size={48} className="notification-empty-icon" />
                         <p>You're all caught up!</p>
                     </div>
                 ) : (
                     <div className="notification-list">
-                        {notifications.map(notification => (
+                        {unreadNotifications.map(notification => (
                             <div
                                 key={notification.id}
                                 className={`notification-card ${notification.unread ? 'unread' : ''}`}
+                                onClick={() => onNotificationClick && onNotificationClick(notification)}
                             >
                                 <div className="notification-card-dot" />
                                 <div className="notification-card-content">
