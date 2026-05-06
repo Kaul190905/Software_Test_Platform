@@ -259,9 +259,20 @@
     -webkit-backdrop-filter: var(--glass-blur-sm);
 }
 
+/* Light mode: tinted bg + strong border so inputs pop off white card */
+[data-theme="light"] .form-input {
+    background: #eef1f9;
+    border: 1.5px solid #b8c2de;
+}
+
 .form-input:hover {
     border-color: var(--glass-border-light);
     background: var(--bg-secondary);
+}
+
+[data-theme="light"] .form-input:hover {
+    background: #e8ecf7;
+    border-color: #9aa5cc;
 }
 
 .form-input:focus {
@@ -269,6 +280,12 @@
     border-color: var(--primary-400);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     background: var(--bg-card);
+}
+
+[data-theme="light"] .form-input:focus {
+    background: #f0f3ff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
 }
 
 .form-input::placeholder {

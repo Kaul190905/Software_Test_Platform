@@ -188,37 +188,79 @@
   --sidebar-width: 280px;
   --sidebar-collapsed-width: 80px;
   --navbar-height: 64px;
+
+  /* Background Glows */
+  --bg-glow: radial-gradient(circle at 15% 50%, var(--glow-1), transparent 30%),
+             radial-gradient(circle at 85% 30%, var(--glow-2), transparent 30%),
+             radial-gradient(circle at 50% 80%, var(--glow-3), transparent 30%);
+  --glow-1: rgba(99, 102, 241, 0.4);
+  --glow-2: rgba(20, 184, 166, 0.4);
+  --glow-3: rgba(139, 92, 246, 0.4);
+
+  /* Default Component Variables */
+  --nav-active-bg: rgba(99, 102, 241, 0.15);
+  --btn-secondary-bg: var(--bg-tertiary);
+  --btn-secondary-hover-bg: var(--slate-600);
 }
 
 [data-theme="light"] {
-  /* Background Colors */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --bg-overlay: rgba(15, 23, 42, 0.5);
+  /* ── Background Surfaces ───────────────────────────────────────────── */
+  /* "Indigo Mist" — tinted canvas so white cards visually pop off it   */
+  --bg-primary:   #e8ecf4;  /* blue-indigo tinted canvas — the "floor" */
+  --bg-secondary: #f0f3fa;  /* lighter panel, sidebars, modals         */
+  --bg-tertiary:  #ffffff;  /* pure white — inputs, dropdowns          */
+  --bg-card:      #ffffff;  /* white cards lift off the canvas         */
+  --bg-card-hover:#f5f7ff;  /* faint indigo blush on card hover        */
+  --bg-overlay:   rgba(15, 20, 40, 0.55);
 
-  /* Glassmorphism Tokens */
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-border-light: rgba(0, 0, 0, 0.04);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+  /* ── Input-specific surface ───────────────────────────────────────── */
+  --input-bg:        #eef1f9;  /* tinted so inputs stand out on white cards */
+  --input-bg-focus:  #f0f3ff;  /* slightly lighter on focus */
+  --input-border:    #b8c2de;  /* visible border stroke */
+  --input-border-hover: #9aa5cc;
 
-  /* Text Colors */
-  --text-primary: var(--slate-800);
-  --text-secondary: var(--slate-600);
-  --text-tertiary: var(--slate-500);
-  --text-muted: var(--slate-400);
-  --text-inverse: var(--slate-50);
+  /* ── Ambient Glows (barely-there depth) ───────────────────────────── */
+  --glow-1: rgba(99, 102, 241, 0.09);
+  --glow-2: rgba(20, 184, 166, 0.07);
+  --glow-3: rgba(139, 92, 246, 0.07);
 
-  /* Border Colors */
-  --border-primary: var(--slate-200);
-  --border-secondary: var(--slate-300);
-  --border-focus: var(--primary-500);
+  /* ── Glassmorphism Tokens ──────────────────────────────────────────── */
+  --glass-bg:           rgba(255, 255, 255, 0.75);
+  --glass-border:       rgba(99, 102, 241, 0.15);
+  --glass-border-light: rgba(99, 102, 241, 0.08);
+  --glass-shadow:       0 4px 24px 0 rgba(15, 20, 60, 0.08);
 
-  /* Component specifics */
-  --nav-active-color: var(--primary-600);
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --text-primary:   #1a1d2e;  /* deep navy-black — readable on white   */
+  --text-secondary: #3d4166;  /* indigo-tinted mid-dark body text      */
+  --text-tertiary:  #6b7099;  /* muted indigo-grey for labels          */
+  --text-muted:     #9fa6c2;  /* soft blue-grey placeholders           */
+  --text-inverse:   #f8fafc;
+
+  /* ── Borders ───────────────────────────────────────────────────────── */
+  --border-primary:  #d6daea;  /* cool blue-grey stroke                */
+  --border-secondary:#c4ccdf;  /* stronger emphasis stroke             */
+  --border-focus:    #6366f1;  /* indigo-500 focus ring                */
+
+  /* ── Shadows (indigo-tinted for premium cohesion) ─────────────────── */
+  --shadow-sm:   0 1px 3px 0 rgba(30, 40, 90, 0.06);
+  --shadow-md:   0 4px 10px -1px rgba(30, 40, 90, 0.10), 0 2px 4px -1px rgba(30, 40, 90, 0.05);
+  --shadow-lg:   0 12px 24px -4px rgba(30, 40, 90, 0.11), 0 4px 8px -2px rgba(30, 40, 90, 0.05);
+  --shadow-xl:   0 20px 32px -6px rgba(30, 40, 90, 0.12), 0 8px 14px -4px rgba(30, 40, 90, 0.06);
+  --shadow-2xl:  0 32px 52px -8px rgba(30, 40, 90, 0.16);
+  --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.20);
+  --shadow-card: 0 2px 8px 0 rgba(30, 40, 90, 0.08), 0 0 0 1px rgba(30, 40, 90, 0.05);
+
+  /* ── Semantic Overrides ────────────────────────────────────────────── */
+  --success-500: #16a34a;
+  --warning-500: #ca8a04;
+  --error-500:   #dc2626;
+
+  /* ── Component Tokens ──────────────────────────────────────────────── */
+  --nav-active-bg:         rgba(99, 102, 241, 0.12);
+  --nav-active-color:      #4338ca;
+  --btn-secondary-bg:      #edf0f9;
+  --btn-secondary-hover-bg:#e0e5f5;
 }
 
 /* Responsive breakpoints reference:

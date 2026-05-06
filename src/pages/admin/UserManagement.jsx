@@ -7,7 +7,7 @@ import Badge from '../../components/common/Badge';
 import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import { useToast } from '../../components/common/Toast';
-import { FiSearch, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX, FiUsers } from 'react-icons/fi';
+import { FiSearch, FiEdit2, FiTrash2, FiMoreVertical, FiCheck, FiX, FiUsers, FiEye } from 'react-icons/fi';
 import './UserManagement.css';
 
 function UserManagement() {
@@ -233,7 +233,11 @@ function UserManagement() {
                         </thead>
                         <tbody>
                             {filteredUsers.map(user => (
-                                <tr key={user._id || user.id}>
+                                <tr
+                                    key={user._id || user.id}
+                                    className="clickable-row"
+                                    onClick={() => navigate(`/admin/users/${user._id || user.id}`)}
+                                >
                                     <td>
                                         <div className="user-cell">
                                             <div className="avatar">{user.name ? user.name.split(' ').map(n => n[0]).join('') : '?'}</div>
@@ -252,25 +256,28 @@ function UserManagement() {
                                         <div className="actions-cell">
                                             <button
                                                 className="action-btn"
-                                                onClick={() => setShowDropdown(showDropdown === (user._id || user.id) ? null : (user._id || user.id))}
+                                                onClick={(e) => { e.stopPropagation(); setShowDropdown(showDropdown === (user._id || user.id) ? null : (user._id || user.id)); }}
                                             >
                                                 <FiMoreVertical size={18} />
                                             </button>
                                             {showDropdown === (user._id || user.id) && (
                                                 <div className="actions-dropdown">
-                                                    <button onClick={() => openEditModal(user)}>
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/users/${user._id || user.id}`); }}>
+                                                        <FiEye size={14} /> View Profile
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); openEditModal(user); }}>
                                                         <FiEdit2 size={14} /> Edit User
                                                     </button>
                                                     {user.status === 'active' ? (
-                                                        <button onClick={() => handleStatusChange(user._id || user.id, 'suspended')}>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleStatusChange(user._id || user.id, 'suspended'); }}>
                                                             <FiX size={14} /> Suspend
                                                         </button>
                                                     ) : (
-                                                        <button onClick={() => handleStatusChange(user._id || user.id, 'active')}>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleStatusChange(user._id || user.id, 'active'); }}>
                                                             <FiCheck size={14} /> Activate
                                                         </button>
                                                     )}
-                                                    <button className="danger" onClick={() => handleDelete(user._id || user.id)}>
+                                                    <button className="danger" onClick={(e) => { e.stopPropagation(); handleDelete(user._id || user.id); }}>
                                                         <FiTrash2 size={14} /> Delete
                                                     </button>
                                                 </div>

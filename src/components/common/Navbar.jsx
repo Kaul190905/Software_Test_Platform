@@ -12,15 +12,19 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef(null);
+    const notificationRef = useRef(null);
 
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (profileRef.current && !profileRef.current.contains(event.target)) {
                 setIsProfileOpen(false);
+            }
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setIsNotificationOpen(false);
             }
         };
 
@@ -82,16 +86,25 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                 <ThemeToggle />
                 
                 {/* Notifications */}
-                <button
-                    className="navbar-icon-btn"
-                    onClick={() => setIsNotificationModalOpen(true)}
-                    aria-label="Notifications"
-                >
-                    <FiBell size={20} />
-                    {unreadCount > 0 && (
-                        <span className="notification-badge">{unreadCount}</span>
-                    )}
-                </button>
+                <div className="navbar-notification-container" ref={notificationRef}>
+                    <button
+                        className={`navbar-icon-btn ${isNotificationOpen ? 'active' : ''}`}
+                        onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                        aria-label="Notifications"
+                    >
+                        <FiBell size={20} />
+                        {unreadCount > 0 && (
+                            <span className="notification-badge">{unreadCount}</span>
+                        )}
+                    </button>
+
+                    <NotificationModal 
+                        isOpen={isNotificationOpen} 
+                        onClose={() => setIsNotificationOpen(false)} 
+                        notifications={notifications}
+                        onMarkAllAsRead={markAllAsRead}
+                    />
+                </div>
 
                 {/* Profile dropdown */}
                 <div className="navbar-profile-container" ref={profileRef}>
@@ -147,12 +160,6 @@ function Navbar({ onMenuToggle, isSidebarOpen }) {
                 </div>
             </div>
 
-            <NotificationModal 
-                isOpen={isNotificationModalOpen} 
-                onClose={() => setIsNotificationModalOpen(false)} 
-                notifications={notifications}
-                onMarkAllAsRead={markAllAsRead}
-            />
         </nav>
     );
 }

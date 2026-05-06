@@ -8,10 +8,13 @@
     border-radius: var(--radius-lg);
     border: none;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: transform var(--transition-fast);
     text-decoration: none;
     white-space: nowrap;
     position: relative;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-text {
@@ -42,63 +45,73 @@
     font-size: var(--font-size-base);
 }
 
-/* Variants */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
-    color: white;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+/* Variants — colors locked across ALL states */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:focus,
+.btn-primary:disabled,
+.btn-primary:hover:disabled {
+    background: var(--primary-600) !important;
+    color: white !important;
 }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary:active                { transform: translateY(0); }
 
-.btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
-}
-
-.btn-primary:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.btn-secondary {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+.btn-secondary,
+.btn-secondary:hover,
+.btn-secondary:active,
+.btn-secondary:focus,
+.btn-secondary:disabled {
+    background: var(--btn-secondary-bg, var(--bg-tertiary)) !important;
+    color: var(--text-primary) !important;
     border: 1px solid var(--border-primary);
 }
+.btn-secondary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-secondary:active                { transform: translateY(0); }
 
-.btn-secondary:hover:not(:disabled) {
-    background: var(--slate-600);
-    border-color: var(--border-secondary);
+.btn-success,
+.btn-success:hover,
+.btn-success:active,
+.btn-success:focus,
+.btn-success:disabled,
+.btn-success:hover:disabled {
+    background: var(--success-500) !important;
+    color: white !important;
 }
+.btn-success:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-success:active                { transform: translateY(0); }
 
-.btn-success {
-    background: linear-gradient(135deg, var(--success-600), var(--success-500));
-    color: white;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:active,
+.btn-danger:focus,
+.btn-danger:disabled,
+.btn-danger:hover:disabled {
+    background: var(--error-500) !important;
+    color: white !important;
 }
+.btn-danger:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-danger:active                { transform: translateY(0); }
 
-.btn-success:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--success-500), var(--success-400));
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+.btn-warning,
+.btn-warning:hover,
+.btn-warning:active,
+.btn-warning:focus,
+.btn-warning:disabled,
+.btn-warning:hover:disabled {
+    background: #f59e0b !important;
+    color: white !important;
 }
+.btn-warning:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-warning:active                { transform: translateY(0); }
 
-.btn-danger {
-    background: linear-gradient(135deg, var(--error-600), var(--error-500));
-    color: white;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
-}
-
-.btn-danger:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--error-500), var(--error-400));
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-}
-
-.btn-ghost {
+.btn-ghost,
+.btn-ghost:active,
+.btn-ghost:focus {
     background: transparent;
     color: var(--text-secondary);
 }
-
 .btn-ghost:hover:not(:disabled) {
     background: var(--bg-tertiary);
     color: var(--text-primary);
