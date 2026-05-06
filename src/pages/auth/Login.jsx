@@ -8,7 +8,7 @@ import '../auth.css';
 
 function Login() {
     const navigate = useNavigate();
-    const { login, loginWithGoogle } = useAuth();
+    const { login, loginWithGoogle, logout } = useAuth();
     const toast = useToast();
     const [formData, setFormData] = useState({
         email: '',
@@ -54,6 +54,12 @@ function Login() {
         setIsLoading(true);
         try {
             const userData = await login(formData.email, formData.password);
+            
+            if (userData.role && userData.role.toLowerCase() !== formData.role.toLowerCase()) {
+                await logout();
+                throw new Error('Role mismatch');
+            }
+
             toast.success('Login Successful', `Welcome back, ${userData.name || userData.email}!`);
             if (userData.status === 'pending' && userData.role !== 'admin') {
                 navigate('/pending-approval');

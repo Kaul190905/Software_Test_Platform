@@ -1,4 +1,3 @@
-import { BsCurrencyRupee } from 'react-icons/bs';
 import { useState, useEffect } from 'react';
 import { feedbackAPI } from '../../services/api';
 import Badge, { AIBadge } from '../../components/common/Badge';
@@ -97,25 +96,20 @@ function Verification() {
                                 <span className="section-label">Observations</span>
                                 <p className="section-text">{item.observations}</p>
                             </div>
-                            <div className="content-section">
-                                <span className="section-label">Proof Attached</span>
-                                <div className="proof-preview">
-                                    <FiEye /> {item.proofType === 'video' ? 'Screen Recording (2:45)' : '5 Screenshots (ZIP)'}
-                                </div>
-                            </div>
+                            
                         </div>
 
                         <div className="verification-footer">
                             <div className="credit-action-box">
                                 <div className="credit-input-group">
                                     <label>Credits to Release:</label>
-                                    <div className="input-with-icon">
-                                        <BsCurrencyRupee className="input-icon" />
+                                    <div className="input-with-icon" style={{ paddingLeft: '1rem' }}>
                                         <input 
                                             type="number" 
                                             className="credit-input"
                                             value={actionCredits[item._id || item.id] || 0}
                                             onChange={(e) => handleCreditChange(item._id || item.id, e.target.value)}
+                                            style={{ paddingLeft: '0.5rem' }}
                                         />
                                     </div>
                                 </div>
@@ -153,3 +147,4 @@ function Verification() {
 }
 
 export default Verification;
+

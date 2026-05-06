@@ -197,17 +197,7 @@ function CreateTask() {
                             {errors.appName && <p className="form-error">{errors.appName}</p>}
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Description (Optional)</label>
-                            <textarea
-                                name="description"
-                                className="form-input form-textarea"
-                                placeholder="Describe what you want tested, any specific areas of focus, etc."
-                                value={formData.description}
-                                onChange={handleChange}
-                                rows={4}
-                            />
-                        </div>
+
                     </div>
                 )}
 
@@ -266,6 +256,18 @@ function CreateTask() {
                                     </label>
                                 ))}
                             </div>
+                        </div>
+
+                        <div className="form-group" style={{ marginTop: 'var(--space-6)' }}>
+                            <label className="form-label">Specific Testing Instructions (Optional)</label>
+                            <textarea
+                                name="description"
+                                className="form-input form-textarea"
+                                placeholder="E.g., Please focus on the checkout flow, test on slow network, look for UI glitches on mobile, etc."
+                                value={formData.description}
+                                onChange={handleChange}
+                                rows={4}
+                            />
                         </div>
                     </div>
                 )}

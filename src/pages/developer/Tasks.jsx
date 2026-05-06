@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useToast } from '../../components/common/Toast';
 import { useAuth } from '../../context/AuthContext';
 import { tasksAPI } from '../../services/api';
 import { getDeadlineStatus, formatCurrency } from '../../utils/helpers';
@@ -7,7 +8,7 @@ import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
-import { FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEye, FiExternalLink, FiMessageCircle, FiEdit2, FiTrash2, FiClipboard } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiFilter, FiMoreVertical, FiEye, FiExternalLink, FiMessageCircle, FiEdit2, FiTrash2, FiClipboard, FiCalendar } from 'react-icons/fi';
 import './Tasks.css';
 
 function Tasks() {
@@ -19,6 +20,10 @@ function Tasks() {
     const [showDropdown, setShowDropdown] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewingTask, setViewingTask] = useState(null);
+    const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
+    const [extendingTask, setExtendingTask] = useState(null);
+    const [newDeadline, setNewDeadline] = useState('');
+    const toast = useToast();
 
     useEffect(() => {
         async function fetchTasks() {
@@ -33,6 +38,43 @@ function Tasks() {
         }
         fetchTasks();
     }, []);
+
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm('Are you sure you want to delete this task?')) return;
+        setLoading(true);
+        try {
+            await tasksAPI.delete(taskId);
+            toast.success('Task Deleted', 'The task has been successfully removed.');
+            const res = await tasksAPI.list();
+            setTasks(res.tasks || []);
+        } catch (err) {
+            toast.error('Deletion Failed', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleExtendSubmit = async () => {
+        if (!newDeadline) return;
+        setLoading(true);
+        try {
+            await tasksAPI.update(extendingTask._id || extendingTask.id, { 
+                deadline: newDeadline,
+                status: 'open' 
+            });
+            toast.success('Deadline Extended', 'Your task is back in the marketplace.');
+            setIsExtendModalOpen(false);
+            setNewDeadline('');
+            
+            // Refresh tasks
+            const res = await tasksAPI.list();
+            setTasks(res.tasks || []);
+        } catch(err) {
+            toast.error('Failed to extend deadline', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.appName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -199,13 +241,23 @@ function Tasks() {
                                                             </Link>
                                                             {task.status === 'open' && (
                                                                 <button onClick={() => {
-                                                                    // Navigate to edit or open edit modal
+                                                                    toast.info('Task Editing', 'Full task editing is coming soon. For now, you can extend the deadline or delete and recreate.');
                                                                     setShowDropdown(null);
                                                                 }}>
                                                                     <FiEdit2 size={14} /> Edit Task
                                                                 </button>
                                                             )}
-                                                            <button className="danger" onClick={() => setShowDropdown(null)}>
+                                                            {deadlineStatus.status === 'overdue' && (
+                                                                <button onClick={() => {
+                                                                    setExtendingTask(task);
+                                                                    setNewDeadline('');
+                                                                    setIsExtendModalOpen(true);
+                                                                    setShowDropdown(null);
+                                                                }}>
+                                                                    <FiCalendar size={14} /> Extend Deadline
+                                                                </button>
+                                                            )}
+                                                            <button className="danger" onClick={() => { handleDeleteTask(task._id || task.id); setShowDropdown(null); }}>
                                                                 <FiTrash2 size={14} /> Delete Task
                                                             </button>
                                                         </div>
@@ -282,6 +334,35 @@ function Tasks() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Extend Deadline Modal */}
+            <Modal
+                isOpen={isExtendModalOpen}
+                onClose={() => setIsExtendModalOpen(false)}
+                title="Extend Task Deadline"
+            >
+                {extendingTask && (
+                    <div className="extend-deadline-content">
+                        <p style={{ marginBottom: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                            Extending the deadline for <strong>{extendingTask.appName}</strong> will re-publish it to the marketplace if it was hidden.
+                        </p>
+                        <div className="form-group">
+                            <label className="form-label">New Deadline *</label>
+                            <input 
+                                type="date" 
+                                className="form-input"
+                                value={newDeadline}
+                                onChange={(e) => setNewDeadline(e.target.value)}
+                                min={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+                        <div className="form-actions" style={{ marginTop: 'var(--space-6)', display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
+                            <Button variant="outline" onClick={() => setIsExtendModalOpen(false)}>Cancel</Button>
+                            <Button variant="primary" onClick={handleExtendSubmit} disabled={!newDeadline}>Save & Publish</Button>
                         </div>
                     </div>
                 )}

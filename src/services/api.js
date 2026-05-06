@@ -351,6 +351,7 @@ export const tasksAPI = {
         if (updates.progress !== undefined) updateData.progress = updates.progress;
         if (updates.appName !== undefined) updateData.app_name = updates.appName;
         if (updates.description !== undefined) updateData.description = updates.description;
+        if (updates.deadline !== undefined) updateData.deadline = updates.deadline;
 
         const { data, error } = await supabase
             .from('tasks')
@@ -424,7 +425,8 @@ export const tasksAPI = {
         let query = supabase
             .from('tasks')
             .select('*, profiles!tasks_developer_id_fkey(name, company)')
-            .eq('status', 'open');
+            .eq('status', 'open')
+            .gte('deadline', new Date().toISOString().split('T')[0]);
 
         if (params.level && params.level !== 'all') {
             query = query.eq('testing_level', params.level);
